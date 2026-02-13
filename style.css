@@ -685,18 +685,68 @@ body::before {
 
   .layer-controls {
     width: 100%;
+    /* Allow scrolling if many items, or just wrap nicely */
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    /* Prevent wrapping to keep them in one line if preferred, or wrap if preferred. 
+                        Given 'amontoado' (bunched), scrolling might be cleaner, but let's try a better wrap first? 
+                        The user said 'options in horizontal', so keeping them horizontal with scroll is good for mobile apps. */
+    padding-bottom: 5px;
+    /* Space for scrollbar */
+    -webkit-overflow-scrolling: touch;
   }
 
   .layer-btn {
-    flex: 1;
-    min-width: 0;
+    flex: 0 0 auto;
+    /* Don't shrink, don't grow excessively */
+    min-width: auto;
     font-size: var(--font-size-xs);
     padding: var(--spacing-xs) var(--spacing-sm);
+    white-space: nowrap;
+    /* Keep text on one line */
+  }
+
+  /* Optional: Hide scrollbar for cleaner look */
+  .layer-controls::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .layer-controls::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 4px;
   }
 
   .radar-map {
     height: 400px;
   }
+}
+
+/* Footer Styles */
+.footer {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  color: var(--color-text-secondary);
+}
+
+.footer p {
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.footer strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.contact-email a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.contact-email a:hover {
+  color: var(--color-accent);
 }
 
 @media (max-width: 480px) {
