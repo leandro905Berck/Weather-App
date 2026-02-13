@@ -14,9 +14,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Leaflet CSS -->
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
@@ -87,22 +92,38 @@
             </div>
         </section>
 
-        <!-- Hourly Forecast -->
-        <section class="forecast-section hidden" id="hourlySection">
-            <div class="glass-card">
-                <h2 class="section-title">Previsão por Hora</h2>
-                <div class="hourly-forecast" id="hourlyForecast">
-                    <!-- Hourly items will be inserted here -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Weekly Forecast -->
+        <!-- Chart Forecast -->
         <section class="forecast-section hidden" id="weeklySection">
             <div class="glass-card">
-                <h2 class="section-title">Previsão Semanal</h2>
-                <div class="weekly-forecast" id="weeklyForecast">
-                    <!-- Daily items will be inserted here -->
+                <div class="chart-header">
+                    <h2 class="section-title">Previsão do Tempo</h2>
+
+                    <div class="chart-actions">
+                        <!-- Time Range Selector -->
+                        <div class="time-range-controls">
+                            <button class="range-btn active" data-range="24h">24 Horas</button>
+                            <button class="range-btn" data-range="5d">5 Dias</button>
+                        </div>
+
+                        <!-- Metric Selector -->
+                        <div class="chart-controls">
+                            <button class="layer-btn active" data-chart="temp" title="Temperatura">
+                                🌡️ Temp
+                            </button>
+                            <button class="layer-btn" data-chart="rain" title="Chuva (%)">
+                                🌧️ Chuva
+                            </button>
+                            <button class="layer-btn" data-chart="clouds" title="Nuvens (%)">
+                                ☁️ Nuvens
+                            </button>
+                            <button class="layer-btn" data-chart="wind" title="Vento (km/h)">
+                                💨 Vento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weatherChart"></canvas>
                 </div>
             </div>
         </section>
