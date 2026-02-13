@@ -407,9 +407,21 @@ async function onMapClick(e) {
         const description = data.weather[0].description;
         const icon = weatherIcons[data.weather[0].icon] || '🌤️';
 
+        // Calculate local time
+        // data.dt is seconds, data.timezone is seconds from UTC
+        // We create a date object adjusted by the timezone offset, then read the UTC components
+        // This gives us the "wall clock" time of the location
+        const localDate = new Date((data.dt + data.timezone) * 1000);
+        const hours = localDate.getUTCHours().toString().padStart(2, '0');
+        const minutes = localDate.getUTCMinutes().toString().padStart(2, '0');
+        const timeString = `${hours}:${minutes}`;
+
         const content = `
             <div class="popup-content">
                 <div class="popup-location">${location}</div>
+                <div class="popup-stat" style="margin-bottom: 8px; font-weight: 500; color: var(--color-text-secondary);">
+                    <span>🕒 ${timeString}</span>
+                </div>
                 <div class="popup-stat">
                     <span>${icon} ${description}</span>
                 </div>
