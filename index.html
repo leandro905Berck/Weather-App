@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Aplicativo de clima moderno com previsão atual, por hora e semanal. Pesquise cidades ou use sua localização.">
+    <meta name="keywords" content="clima, tempo, previsão, meteorologia, weather">
+    <title>Weather App - Previsão do Tempo Moderna</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🌤️ Weather App</h1>
+            <p>Previsão do tempo em tempo real</p>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <input type="text" class="search-input" id="cityInput" placeholder="Digite o nome da cidade..."
+                    aria-label="Pesquisar cidade">
+                <button class="btn" id="searchBtn" aria-label="Pesquisar">
+                    Pesquisar
+                </button>
+                <button class="btn btn-icon" id="locationBtn" aria-label="Usar minha localização"
+                    title="Usar minha localização">
+                    📍
+                </button>
+            </div>
+        </section>
+
+        <!-- Error Message -->
+        <div class="error" id="errorMessage">
+            <p class="error-message" id="errorText"></p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <p>Carregando dados do clima...</p>
+        </div>
+
+        <!-- Current Weather -->
+        <section class="current-weather glass-card hidden" id="currentWeather">
+            <div class="weather-main">
+                <div class="weather-icon-main" id="weatherIconMain">🌤️</div>
+                <div class="weather-temp">
+                    <div class="temp-value" id="tempValue">--°</div>
+                    <div class="weather-description" id="weatherDescription">--</div>
+                    <div class="weather-location" id="weatherLocation">--</div>
+                </div>
+            </div>
+
+            <div class="weather-details">
+                <div class="detail-item">
+                    <div class="detail-label">Sensação</div>
+                    <div class="detail-value" id="feelsLike">--°</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Umidade</div>
+                    <div class="detail-value" id="humidity">--%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Vento</div>
+                    <div class="detail-value" id="windSpeed">-- km/h</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Pressão</div>
+                    <div class="detail-value" id="pressure">-- hPa</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hourly Forecast -->
+        <section class="forecast-section hidden" id="hourlySection">
+            <div class="glass-card">
+                <h2 class="section-title">Previsão por Hora</h2>
+                <div class="hourly-forecast" id="hourlyForecast">
+                    <!-- Hourly items will be inserted here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Weekly Forecast -->
+        <section class="forecast-section hidden" id="weeklySection">
+            <div class="glass-card">
+                <h2 class="section-title">Previsão Semanal</h2>
+                <div class="weekly-forecast" id="weeklyForecast">
+                    <!-- Daily items will be inserted here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Radar Map Section -->
+        <section class="radar-section hidden" id="radarSection">
+            <div class="glass-card">
+                <div class="radar-header">
+                    <h2 class="section-title">🗺️ Radar do Clima</h2>
+                    <div class="layer-controls">
+                        <button class="layer-btn active" data-layer="precipitation_new" title="Precipitação">
+                            🌧️ Chuva
+                        </button>
+                        <button class="layer-btn" data-layer="clouds_new" title="Nuvens">
+                            ☁️ Nuvens
+                        </button>
+                        <button class="layer-btn" data-layer="temp_new" title="Temperatura">
+                            🌡️ Temp
+                        </button>
+                        <button class="layer-btn" data-layer="wind_new" title="Vento">
+                            💨 Vento
+                        </button>
+                        <button class="layer-btn" data-layer="pressure_new" title="Pressão">
+                            📊 Pressão
+                        </button>
+                    </div>
+                </div>
+                <div id="radarMap" class="radar-map"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+
+</html>
