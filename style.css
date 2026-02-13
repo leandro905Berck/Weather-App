@@ -749,9 +749,108 @@ body::before {
   color: var(--color-accent);
 }
 
-@media (max-width: 480px) {
+/* Chart Section Styles */
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  /* Changed from center to allow multiline wrap alignment */
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.chart-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  align-items: flex-end;
+}
+
+.time-range-controls {
+  display: flex;
+  background: hsla(230, 30%, 20%, 0.6);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid hsla(0, 0%, 100%, 0.1);
+}
+
+.range-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.range-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.range-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-controls {
+  display: flex;
+  gap: var(--spacing-xs);
+  overflow-x: auto;
+  padding-bottom: 5px;
+  /* For scrollbar if needed */
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* Optional: Hide scrollbar for chart controls too if desired, 
+   but ensuring consistency with .layer-controls is good. 
+   Actually we can reuse .layer-controls style if we just add the class to div.
+   But I added specific class for semantics. Let's make sure it scrolls well. */
+
+.chart-container {
+  position: relative;
+  height: 350px;
+  /* Increased height slightly */
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chart-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .time-range-controls {
+    justify-content: center;
+  }
+
+  .range-btn {
+    flex: 1;
+  }
+
+  .chart-controls {
+    width: 100%;
+    justify-content: space-between;
+    /* Distribute buttons */
+  }
+
   .container {
     padding: var(--spacing-sm);
+  }
+
+  .chart-container {
+    height: 300px;
   }
 
   .header h1 {
