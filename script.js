@@ -751,8 +751,8 @@ function initializeMap(lat, lon) {
             maxZoom: 18
         }).addTo(map);
 
-        // Auto-hide the map interaction hint after 5 seconds
-        setTimeout(hideMapHint, 5000);
+        // Hint will now only hide when the user clicks the map or its controls
+        // removing auto-hide timeout as requested by user
 
         // Add a click listener to the container as a fallback to ensure hint hides
         const mapContainer = document.querySelector('.radar-map-container');
