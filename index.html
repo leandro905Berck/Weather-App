@@ -31,9 +31,21 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1>🌤️ Weather App BR</h1>
-            <p>Previsão do tempo em tempo real</p>
+            <h1 id="headerCityName">🌤️ Weather App BR</h1>
+            <p id="headerMessage">Previsão do tempo em tempo real</p>
         </header>
+
+        <!-- SVG Gradients -->
+        <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+            <defs>
+                <linearGradient id="uvGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#4ade80" />
+                    <stop offset="30%" stop-color="#fbbf24" />
+                    <stop offset="60%" stop-color="#f87171" />
+                    <stop offset="100%" stop-color="#c084fc" />
+                </linearGradient>
+            </defs>
+        </svg>
 
         <!-- Search Section -->
         <section class="search-section">
@@ -48,6 +60,36 @@
                     📍Me localize
                 </button>
             </div>
+
+            <!-- Units Selection Panel -->
+            <div class="units-panel glass-card">
+                <div class="unit-group">
+                    <span class="unit-label">Temp:</span>
+                    <div class="toggle-group" id="tempUnitToggle">
+                        <button class="toggle-btn active" data-unit="C">°C</button>
+                        <button class="toggle-btn" data-unit="F">°F</button>
+                    </div>
+                </div>
+                <div class="unit-group">
+                    <span class="unit-label">Pressão:</span>
+                    <select class="unit-select" id="pressureUnitSelect">
+                        <option value="hPa">hPa</option>
+                        <option value="atm">atm</option>
+                        <option value="mbar">mbar</option>
+                        <option value="mmhg">mmHg</option>
+                        <option value="inhg">inHg</option>
+                    </select>
+                </div>
+                <div class="unit-group">
+                    <span class="unit-label">Vento:</span>
+                    <select class="unit-select" id="windUnitSelect">
+                        <option value="kmh">km/h</option>
+                        <option value="ms">m/s</option>
+                        <option value="mph">mph</option>
+                        <option value="kn">kn</option>
+                    </select>
+                </div>
+            </div>
         </section>
 
         <!-- Error Message -->
@@ -61,72 +103,174 @@
             <p>Carregando dados do clima...</p>
         </div>
 
-        <!-- Current Weather -->
-        <section class="current-weather glass-card hidden" id="currentWeather">
-            <div class="weather-main">
-                <div class="weather-icon-main" id="weatherIconMain">🌤️</div>
-                <div class="weather-temp">
-                    <div class="temp-value" id="tempValue">--°</div>
-                    <div class="weather-description" id="weatherDescription">--</div>
-                    <div class="weather-location" id="weatherLocation">--</div>
-                </div>
-            </div>
-
-            <div class="weather-details">
-                <div class="detail-item">
-                    <div class="detail-label">Sensação</div>
-                    <div class="detail-value" id="feelsLike">--°</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Umidade</div>
-                    <div class="detail-value" id="humidity">--%</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Vento</div>
-                    <div class="detail-value" id="windSpeed">-- km/h</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Pressão</div>
-                    <div class="detail-value" id="pressure">-- hPa</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chart Forecast -->
-        <section class="forecast-section hidden" id="weeklySection">
-            <div class="glass-card">
-                <div class="chart-header">
-                    <h2 class="section-title">Previsão do Tempo</h2>
-
-                    <div class="chart-actions">
-                        <!-- Time Range Selector -->
-                        <div class="time-range-controls">
-                            <button class="range-btn active" data-range="24h">24 Horas</button>
-                            <button class="range-btn" data-range="5d">5 Dias</button>
-                        </div>
-
-                        <!-- Metric Selector -->
-                        <div class="chart-controls">
-                            <button class="layer-btn active" data-chart="temp" title="Temperatura">
-                                🌡️ Temp
-                            </button>
-                            <button class="layer-btn" data-chart="rain" title="Chuva (%)">
-                                🌧️ Chuva
-                            </button>
-                            <button class="layer-btn" data-chart="clouds" title="Nuvens (%)">
-                                ☁️ Nuvens
-                            </button>
-                            <button class="layer-btn" data-chart="wind" title="Vento (km/h)">
-                                💨 Vento
-                            </button>
+        <!-- Main Dashboard -->
+        <main class="dashboard hidden" id="mainDashboard">
+            <!-- Hero Weather Section -->
+            <section class="dashboard-hero">
+                <div class="hero-main">
+                    <div class="hero-icon" id="heroIcon">☀️</div>
+                    <div class="hero-temp-container">
+                        <span class="hero-temp" id="heroTempValue">30°C</span>
+                        <div class="hero-details">
+                            <span class="hero-description" id="heroDescription">Céu Limpo</span>
+                            <span class="hero-location" id="heroLocation">Pirassununga, BR</span>
                         </div>
                     </div>
                 </div>
-                <div class="chart-container">
+            </section>
+
+            <!-- Row 1: Summary -->
+            <div class="dashboard-top">
+                <section class="dashboard-card forecast-summary-card">
+                    <div class="card-header">
+                        <h3 class="card-title">📅 Previsão para 5 dias</h3>
+                    </div>
+                    <div class="forecast-list" id="forecastSummaryList">
+                        <!-- Dynamic items -->
+                    </div>
+                    <button class="btn-text">Mais detalhes ▸</button>
+                </section>
+            </div>
+
+            <!-- Row 2: Detail Grid -->
+            <div class="dashboard-grid">
+                <!-- UV Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">UV</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="uvLabel">Moderado</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="uvGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-value" id="uvIndex">5</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Humidity Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Umidade</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="humidity">65%</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="humidityGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-icon">💧</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Feels Like Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Sensação</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="feelsLike">32°</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="tempGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-center-icon">🌡️</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Wind Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="windDirName">Noroeste</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="windSpeed">7,4</div>
+                        <div class="gauge-container">
+                            <div class="compass">
+                                <div class="compass-label n">N</div>
+                                <div class="compass-label s">S</div>
+                                <div class="compass-label e">E</div>
+                                <div class="compass-label w">W</div>
+                                <div class="compass-arrow" id="windArrow"></div>
+                                <div class="compass-center">km/h</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sunrise Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="sunStatusLabel">Pôr do Sol</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="sunStatusTime">18:48</div>
+                        <div class="sun-path-dashboard">
+                            <svg viewBox="0 0 100 40" class="sun-svg">
+                                <path class="sun-bg" d="M 5 35 Q 50 0 95 35" />
+                                <path id="sunPathActive" class="sun-fill" d="M 5 35 Q 50 0 95 35"
+                                    stroke-dasharray="0, 1000" />
+                                <circle id="sunPoint" cx="5" cy="35" r="4" />
+                            </svg>
+                            <div class="sun-labels">
+                                <span id="sunriseTime">06:00</span>
+                                <span id="sunsetTime">18:48</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Pressure Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pressão</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="pressure">1,00</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="pressureGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-icon-unit" id="pressureUnit">atm</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Full Width Chart -->
+            <section class="dashboard-card chart-card-full">
+                <div class="card-header">
+                    <h3 class="card-title">Previsão Detalhada</h3>
+                    <div class="chart-actions-dashboard">
+                        <div class="range-controls-small">
+                            <button class="range-btn active" data-range="24h">24h</button>
+                            <button class="range-btn" data-range="5d">5d</button>
+                        </div>
+                        <div class="metric-controls-small">
+                            <button class="layer-btn active" data-chart="temp" title="Temperatura">🌡️</button>
+                            <button class="layer-btn" data-chart="rain" title="Chuva">🌧️</button>
+                            <button class="layer-btn" data-chart="clouds" title="Nuvens">☁️</button>
+                            <button class="layer-btn" data-chart="wind" title="Vento">💨</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
                     <canvas id="weatherChart"></canvas>
                 </div>
-            </div>
-        </section>
+            </section>
+        </main>
 
         <!-- Radar Map Section -->
         <section class="radar-section hidden" id="radarSection">
@@ -149,6 +293,7 @@
                         <button class="layer-btn" data-layer="pressure_new" title="Pressão">
                             📊 Pressão
                         </button>
+
                     </div>
                 </div>
                 <div id="radarMap" class="radar-map"></div>
