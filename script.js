@@ -12,6 +12,11 @@ const API_KEY = '5fa880cce39ad7197758233da7e0c7da';
 const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
 const GEO_API_URL = 'https://api.openweathermap.org/geo/1.0';
 
+// PWS API Configuration (Weather Underground / Weather.com)
+const PWS_API_KEY = '197bad59d647405abbad59d647f05a65';
+const PWS_STATION_ID = 'IPIRAS1';
+const PWS_API_URL = 'https://api.weather.com/v2/pws/observations/current';
+
 // DOM Elements
 const cityInput = document.getElementById('cityInput');
 const searchBtn = document.getElementById('searchBtn');
@@ -21,6 +26,7 @@ const errorText = document.getElementById('errorText');
 const loadingState = document.getElementById('loadingState');
 const mainDashboard = document.getElementById('mainDashboard');
 const radarSection = document.getElementById('radarSection');
+const pwsBtn = document.getElementById('pwsBtn');
 
 // New DOM Elements for Details
 const uvIndex = document.getElementById('uvIndex');
@@ -108,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners
     searchBtn.addEventListener('click', handleSearch);
     locationBtn.addEventListener('click', handleGeolocation);
+    pwsBtn.addEventListener('click', fetchPwsData);
     cityInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSearch();
     });
@@ -994,6 +1001,113 @@ async function onMapClick(e) {
 }
 
 // ========== RADAR MAP CONTROLS ==========
+
+// ========== PWS DATA FUNCTIONS ==========
+
+async function fetchPwsData() {
+    try {
+        showLoading();
+        hideError();
+
+        // 1. Fetch PWS Real-time Data
+        const pwsRes = await fetch(
+            `${PWS_API_URL}?stationId=${PWS_STATION_ID}&format=json&units=m&apiKey=${PWS_API_KEY}`
+        );
+
+        if (!pwsRes.ok) throw new Error('Erro ao buscar dados da estação pessoal');
+
+        const pwsData = await pwsRes.json();
+
+        if (!pwsData.observations || pwsData.observations.length === 0) {
+            throw new Error('Nenhuma observação encontrada para esta estação');
+        }
+
+        const observation = pwsData.observations[0];
+
+        // 2. Fetch Forecast from OpenWeatherMap for Pirassununga (since PWS has no forecast)
+        // We use the lat/lon from the PWS observation to ensure we get the right forecast area
+        const lat = observation.lat;
+        const lon = observation.lon;
+
+        const forecastRes = await fetch(
+            `${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}&units=metric&lang=pt_br&appid=${API_KEY}`
+        );
+
+        if (forecastRes.ok) {
+            const forecastData = await forecastRes.json();
+            currentChartData = forecastData;
+            displayChartForecast(forecastData);
+        }
+
+        // 3. Display PWS Data
+        displayPwsWeather(observation);
+
+        hideLoading();
+        hideError();
+
+    } catch (error) {
+        hideLoading();
+        showError(error.message);
+        console.error("PWS error:", error);
+    }
+}
+
+function displayPwsWeather(obs) {
+    // Map PWS observation to the format displayCurrentWeather expects (mostly)
+    // or just update manually to ensure precision
+
+    const metric = obs.metric;
+    const locationName = `Estação Pirassununga (${obs.stationID})`;
+
+    // Create a data object compatible with existing display logic where possible
+    const data = {
+        name: obs.neighborhood || "Pirassununga",
+        sys: { country: obs.country, sunrise: 0, sunset: 0 }, // We'll handle sun path carefully
+        main: {
+            temp: metric.temp,
+            feels_like: metric.heatIndex || metric.temp,
+            humidity: obs.humidity,
+            pressure: metric.pressure
+        },
+        wind: {
+            speed: metric.windSpeed / 3.6, // PWS is m, but our logic expects speed*3.6 to get kmh? 
+            // Actually the PWS units=m means windSpeed is km/h already. 
+            // My formatWind takes kmh. My displayCurrentWeather takes speed*3.6.
+            // If I pass metric.windSpeed / 3.6 to 'data.wind.speed', then displayCurrentWeather will do (metric.windSpeed/3.6)*3.6 = metric.windSpeed. OK.
+            deg: obs.winddir
+        },
+        weather: [{ description: "Dados da Estação Local", icon: "01d" }], // Station icon
+        coord: { lat: obs.lat, lon: obs.lon },
+        uvi: obs.uv || 0,
+        dt: obs.epoch
+    };
+
+    // Update the Dashboard using existing logic
+    displayCurrentWeather(data, locationName);
+
+    // Specific updates for PWS (preserving station name)
+    if (document.getElementById('heroLocation')) {
+        document.getElementById('heroLocation').textContent = locationName;
+    }
+
+    // UV can be higher from PWS
+    if (obs.uv !== null) {
+        if (document.getElementById('uvIndex')) document.getElementById('uvIndex').textContent = Math.round(obs.uv);
+    }
+
+    // Since we don't have sunrise/sunset from PWS JSON, we can try to get them from the OWM forecast if available
+    if (currentChartData && currentChartData.city) {
+        const fakeData = {
+            sys: {
+                sunrise: currentChartData.city.sunrise,
+                sunset: currentChartData.city.sunset
+            },
+            dt: obs.epoch,
+            timezone: currentChartData.city.timezone
+        };
+        displaySunPath(fakeData);
+    }
+}
 
 function initializeRadarControls() {
     const layerButtons = document.querySelectorAll('.layer-btn[data-layer]');

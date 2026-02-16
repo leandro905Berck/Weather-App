@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-title" content="Weather BR">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="icon" type="image/png" href="icons/icon-192.png">
     <meta name="description"
         content="Aplicativo de clima moderno com previsão atual, por hora e semanal. Pesquise cidades ou use sua localização.">
     <meta name="keywords" content="clima, tempo, previsão, meteorologia, weather">
@@ -56,15 +55,20 @@
 
         <!-- Search Section -->
         <section class="search-section">
-            <div class="search-container">
+            <div class="search-bar">
                 <input type="text" class="search-input" id="cityInput" placeholder="Digite o nome da cidade..."
                     aria-label="Pesquisar cidade">
                 <button class="btn" id="searchBtn" aria-label="Pesquisar">
                     Pesquisar
                 </button>
-                <button class="btn btn-icon" id="locationBtn" aria-label="Usar minha localização"
-                    title="Usar minha localização">
-                    📍Me localize
+            </div>
+
+            <div class="search-actions">
+                <button class="btn btn-secondary" id="locationBtn" aria-label="Usar minha localização">
+                    📍 Me localize
+                </button>
+                <button class="btn btn-secondary button-pws" id="pwsBtn" aria-label="Estação Pirassununga">
+                    📡 Estação Pira
                 </button>
             </div>
 

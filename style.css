@@ -133,13 +133,24 @@ body::before {
 /* Search Section */
 .search-section {
   margin-bottom: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
-.search-container {
+.search-bar {
   display: flex;
   gap: var(--spacing-sm);
   max-width: 600px;
   margin: 0 auto;
+  width: 100%;
+}
+
+.search-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .search-input {
@@ -177,6 +188,22 @@ body::before {
   transition: all var(--transition-base);
   box-shadow: var(--shadow-md);
   font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
+.btn-secondary {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: hsla(230, 30%, 20%, 0.6);
+  font-size: var(--font-size-sm);
+  border: 1px solid hsla(0, 0%, 100%, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: var(--color-primary);
 }
 
 .btn:hover {
@@ -186,15 +213,6 @@ body::before {
 
 .btn:active {
   transform: translateY(0);
-}
-
-.btn-icon {
-  padding: var(--spacing-md);
-  min-width: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-xl);
 }
 
 /* Glass Card */
@@ -609,6 +627,57 @@ body::before {
 
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-hero {
+    justify-content: center;
+    padding: var(--spacing-lg);
+  }
+
+  .hero-main {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+
+  .hero-temp-container {
+    align-items: center;
+  }
+
+  .hero-details {
+    align-items: center;
+  }
+
+  .hero-temp {
+    font-size: 56px;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: var(--spacing-sm);
+  }
+
+  .search-bar {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .search-input {
+    width: 100%;
+    font-size: var(--font-size-base);
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .hero-temp {
+    font-size: 48px;
+  }
+
+  .hero-icon {
+    font-size: 60px;
   }
 }
 
