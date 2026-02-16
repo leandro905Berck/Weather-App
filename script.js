@@ -517,12 +517,12 @@ function displaySunPath(data) {
                 sunTimeLabel.textContent = `${hours}:${minutes}`;
 
                 // Position label relative to dot
-                // Positioned below the dot. y + 12 ensures it fits in the new 52px height viewBox
-                // when the sun is at the bottom (y=35). 35 + 12 = 47, which is < 52.
-                let labelY = y + 12;
+                // Positioned below the dot. y + 14 ensures it fits in the new 60px height viewBox
+                // when the sun is at the bottom (y=35). 35 + 14 = 49, which is < 60.
+                let labelY = y + 14;
 
-                // Safety bound to ensure it never gets cut off (viewBox is 52 high)
-                if (labelY > 48) labelY = 48;
+                // Safety bound to ensure it never gets cut off (viewBox is 60 high)
+                if (labelY > 55) labelY = 55;
 
                 sunTimeLabel.setAttribute('x', x);
                 sunTimeLabel.setAttribute('y', labelY);
