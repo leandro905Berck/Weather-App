@@ -464,7 +464,8 @@ function displaySunPath(data) {
     const sunTimeLabel = document.getElementById('sunTimeLabel');
 
     if (sunPathActive) {
-        const pathLength = 145; // Approx length of Q 50 0 curve
+        // Use getTotalLength() to get actual SVG path length for perfect alignment
+        const pathLength = sunPathActive.getTotalLength();
         sunPathActive.style.strokeDasharray = isDay ? `${progress * pathLength}, 1000` : `0, 1000`;
     }
 
