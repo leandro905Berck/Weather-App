@@ -517,15 +517,27 @@ function displaySunPath(data) {
                 sunTimeLabel.textContent = `${hours}:${minutes}`;
 
                 // Position label relative to dot
-                // Positioned below the dot. y + 14 ensures it fits in the new 60px height viewBox
-                // when the sun is at the bottom (y=35). 35 + 14 = 49, which is < 60.
+                // Positioned below the dot.
                 let labelY = y + 14;
 
-                // Safety bound to ensure it never gets cut off (viewBox is 60 high)
-                if (labelY > 55) labelY = 55;
+                // Safety bound to ensure it never gets cut off (new inner viewBox is 70 high)
+                if (labelY > 65) labelY = 65;
 
-                sunTimeLabel.setAttribute('x', x);
+                // Dynamic horizontal alignment to prevent cutting off at edges
+                let anchor = 'middle';
+                let adjustedX = x;
+
+                if (x < 15) {
+                    anchor = 'start';
+                    adjustedX = Math.max(0, x - 2); // Slight nudge for start alignment
+                } else if (x > 85) {
+                    anchor = 'end';
+                    adjustedX = Math.min(100, x + 2); // Slight nudge for end alignment
+                }
+
+                sunTimeLabel.setAttribute('x', adjustedX);
                 sunTimeLabel.setAttribute('y', labelY);
+                sunTimeLabel.setAttribute('text-anchor', anchor);
             }
         }
     }
