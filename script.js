@@ -462,6 +462,7 @@ function displaySunPath(data) {
 
     const sunPathActive = document.getElementById('sunPathActive');
     const sunPoint = document.getElementById('sunPoint');
+    const sunTimeLabel = document.getElementById('sunTimeLabel');
 
     if (sunPathActive) {
         const pathLength = 145; // Approx length of Q 50 0 curve
@@ -471,16 +472,34 @@ function displaySunPath(data) {
     if (sunPoint) {
         if (!isDay) {
             sunPoint.style.display = 'none';
+            if (sunTimeLabel) sunTimeLabel.style.display = 'none';
         } else {
             sunPoint.style.display = 'block';
+            if (sunTimeLabel) sunTimeLabel.style.display = 'block';
+
             const t = progress;
             const p0 = { x: 5, y: 35 };
             const p1 = { x: 50, y: 0 };
             const p2 = { x: 95, y: 35 };
             const x = (1 - t) ** 2 * p0.x + 2 * (1 - t) * t * p1.x + t ** 2 * p2.x;
             const y = (1 - t) ** 2 * p0.y + 2 * (1 - t) * t * p1.y + t ** 2 * p2.y;
+
             sunPoint.setAttribute('cx', x);
             sunPoint.setAttribute('cy', y);
+
+            if (sunTimeLabel) {
+                // Determine current local time at the location
+                const localDate = new Date((data.dt + data.timezone) * 1000);
+                const hours = localDate.getUTCHours().toString().padStart(2, '0');
+                const minutes = localDate.getUTCMinutes().toString().padStart(2, '0');
+                sunTimeLabel.textContent = `${hours}:${minutes}`;
+
+                // Position label relative to dot
+                // Always put it below the dot/arc to avoid overlap with markers like "12h"
+                const yOffset = 15;
+                sunTimeLabel.setAttribute('x', x);
+                sunTimeLabel.setAttribute('y', y + yOffset);
+            }
         }
     }
 }

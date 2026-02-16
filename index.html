@@ -220,7 +220,9 @@
                                 <path class="sun-bg" d="M 5 35 Q 50 0 95 35" />
                                 <path id="sunPathActive" class="sun-fill" d="M 5 35 Q 50 0 95 35"
                                     stroke-dasharray="0, 1000" />
+                                <text x="50" y="8" class="sun-peak-label">12h</text>
                                 <circle id="sunPoint" cx="5" cy="35" r="4" />
+                                <text id="sunTimeLabel" x="5" y="30" class="sun-current-time-label"></text>
                             </svg>
                             <div class="sun-labels">
                                 <span id="sunriseTime">06:00</span>
@@ -274,30 +276,28 @@
 
         <!-- Radar Map Section -->
         <section class="radar-section hidden" id="radarSection">
-            <div class="glass-card">
-                <div class="radar-header">
-                    <h2 class="section-title">🗺️ Radar do Clima</h2>
-                    <div class="layer-controls">
-                        <button class="layer-btn active" data-layer="precipitation_new" title="Precipitação">
-                            🌧️ Chuva
-                        </button>
-                        <button class="layer-btn" data-layer="clouds_new" title="Nuvens">
-                            ☁️ Nuvens
-                        </button>
-                        <button class="layer-btn" data-layer="temp_new" title="Temperatura">
-                            🌡️ Temp
-                        </button>
-                        <button class="layer-btn" data-layer="wind_new" title="Vento">
-                            💨 Vento
-                        </button>
-                        <button class="layer-btn" data-layer="pressure_new" title="Pressão">
-                            📊 Pressão
-                        </button>
+            <div class="radar-header">
+                <h2 class="section-title">🗺️ Radar do Clima</h2>
+                <div class="layer-controls">
+                    <button class="layer-btn active" data-layer="precipitation_new" title="Precipitação">
+                        🌧️ Chuva
+                    </button>
+                    <button class="layer-btn" data-layer="clouds_new" title="Nuvens">
+                        ☁️ Nuvens
+                    </button>
+                    <button class="layer-btn" data-layer="temp_new" title="Temperatura">
+                        🌡️ Temp
+                    </button>
+                    <button class="layer-btn" data-layer="wind_new" title="Vento">
+                        💨 Vento
+                    </button>
+                    <button class="layer-btn" data-layer="pressure_new" title="Pressão">
+                        📊 Pressão
+                    </button>
 
-                    </div>
                 </div>
-                <div id="radarMap" class="radar-map"></div>
             </div>
+            <div id="radarMap" class="radar-map"></div>
         </section>
 
         <!-- Footer -->
