@@ -138,11 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Chart Controls
     initializeChartControls();
 
-    // Forecast Details Button (Scroll to Radar)
+    // Forecast Details Button (Scroll to Detailed Forecast)
     const detailsBtn = document.querySelector('.forecast-summary-card .btn-text');
     if (detailsBtn) {
         detailsBtn.addEventListener('click', () => {
-            radarSection.scrollIntoView({ behavior: 'smooth' });
+            const detailedForecastSection = document.getElementById('detailedForecastSection');
+            if (detailedForecastSection) {
+                detailedForecastSection.scrollIntoView({ behavior: 'smooth' });
+            }
         });
     }
 });
