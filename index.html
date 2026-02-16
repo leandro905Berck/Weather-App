@@ -146,6 +146,25 @@
 
             <!-- Row 2: Detail Grid -->
             <div class="dashboard-grid">
+
+                <!-- Feels Like Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Sensação</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="feelsLike">32°</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="tempGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-center-icon">🌡️</div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- UV Card -->
                 <section class="dashboard-card detail-card">
                     <div class="card-header">
@@ -178,24 +197,6 @@
                                     stroke-dasharray="0, 1000" />
                             </svg>
                             <div class="gauge-icon">💧</div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Feels Like Card -->
-                <section class="dashboard-card detail-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Sensação</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="main-value" id="feelsLike">32°</div>
-                        <div class="gauge-container">
-                            <svg viewBox="0 0 100 60" class="gauge">
-                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
-                                <path id="tempGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
-                                    stroke-dasharray="0, 1000" />
-                            </svg>
-                            <div class="gauge-center-icon">🌡️</div>
                         </div>
                     </div>
                 </section>
