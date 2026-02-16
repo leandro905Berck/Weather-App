@@ -1,7 +1,7 @@
 {
   "name": "Weather App BR",
   "short_name": "Weather BR",
-  "description": "Previsão do tempo premium em tempo real",
+  "description": "Aplicativo de clima moderno com previsão atual, por hora e semanal. Pesquise cidades ou use sua localização.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",

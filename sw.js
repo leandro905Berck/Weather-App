@@ -1,10 +1,11 @@
-const CACHE_NAME = 'weather-app-br-v1';
+const CACHE_NAME = 'weather-app-br-v2';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './script.js',
     './manifest.json',
+    './logo.png',
     './icons/icon-192.png',
     './icons/icon-512.png'
 ];
