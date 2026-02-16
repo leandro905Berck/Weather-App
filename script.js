@@ -1,3 +1,12 @@
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker Registered', reg))
+            .catch(err => console.log('Service Worker registration failed', err));
+    });
+}
+
 // OpenWeatherMap API Configuration
 const API_KEY = '5fa880cce39ad7197758233da7e0c7da';
 const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
