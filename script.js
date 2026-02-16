@@ -138,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Chart Controls
     initializeChartControls();
 
+    // Initialize Modal Logic
+    initializeModalLogic();
+
     // Forecast Details Button (Scroll to Detailed Forecast)
     const detailsBtn = document.querySelector('.forecast-summary-card .btn-text');
     if (detailsBtn) {
@@ -1093,6 +1096,21 @@ function displayPwsWeather(obs) {
         document.getElementById('heroLocation').textContent = locationName;
     }
 
+    // Add owner credit below description with info icon
+    const heroDesc = document.getElementById('heroDescription');
+    if (heroDesc) {
+        heroDesc.innerHTML = `Dados da Estação Local<div style="font-size: 0.7em; opacity: 0.8; margin-top: 2px;">Prop: William de Souza Sardinha <span class="info-icon-small" id="openContactModal">i</span></div>`;
+
+        // Add listener to the newly created icon
+        const icon = document.getElementById('openContactModal');
+        if (icon) {
+            icon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('contactModal').classList.add('active');
+            });
+        }
+    }
+
     // UV can be higher from PWS
     if (obs.uv !== null) {
         if (document.getElementById('uvIndex')) document.getElementById('uvIndex').textContent = Math.round(obs.uv);
@@ -1123,5 +1141,29 @@ function initializeRadarControls() {
             switchWeatherLayer(button.getAttribute('data-layer'));
             hideMapHint();
         });
+    });
+}
+
+function initializeModalLogic() {
+    const modal = document.getElementById('contactModal');
+    const closeBtn = document.querySelector('.close-modal');
+
+    if (!modal || !closeBtn) return;
+
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+
+    // Close on ESC key
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            modal.classList.remove('active');
+        }
     });
 }
