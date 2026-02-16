@@ -377,9 +377,8 @@ function displayCurrentWeather(data, customLocation = null) {
     if (document.getElementById('heroLocation')) document.getElementById('heroLocation').textContent = location;
     if (document.getElementById('heroIcon')) document.getElementById('heroIcon').textContent = icon;
 
-    // Update Global Headers (fallback)
-    if (document.getElementById('headerCityName')) document.getElementById('headerCityName').textContent = location;
-    if (document.getElementById('headerMessage')) document.getElementById('headerMessage').textContent = description.charAt(0).toUpperCase() + description.slice(1);
+    // Update Global Headers (fallback) - Removed city name update to preserve app title
+    // Preserving "Weather App BR" as requested by user
 
     const mainDashboard = document.getElementById('mainDashboard');
     if (mainDashboard) mainDashboard.classList.remove('hidden');
@@ -546,6 +545,15 @@ function displayForecastSummary(data) {
 function updateChart() {
     if (!currentChartData) return;
     const ctx = document.getElementById('weatherChart').getContext('2d');
+
+    // Set data-range on the scroll wrapper for mobile min-width styling
+    const scrollWrapper = document.querySelector('.chart-scroll-wrapper');
+    if (scrollWrapper) {
+        scrollWrapper.setAttribute('data-range', currentTimeRange);
+        // Reset scroll position when range changes
+        scrollWrapper.scrollLeft = 0;
+    }
+
     let fullList = [];
     if (currentWeatherData) fullList.push({ ...currentWeatherData, pop: 0 });
     fullList = fullList.concat(currentChartData.list);
@@ -685,6 +693,15 @@ function initializeChartControls() {
     });
 }
 
+// Function to hide map interaction hint instantly
+function hideMapHint() {
+    const mapHint = document.querySelector('.map-hint');
+    if (mapHint && !mapHint.classList.contains('fade-out')) {
+        mapHint.classList.add('fade-out');
+    }
+}
+
+
 // UI Helper Functions
 function showLoading() {
     loadingState.classList.add('active');
@@ -733,6 +750,15 @@ function initializeMap(lat, lon) {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 18
         }).addTo(map);
+
+        // Auto-hide the map interaction hint after 5 seconds
+        setTimeout(hideMapHint, 5000);
+
+        // Add a click listener to the container as a fallback to ensure hint hides
+        const mapContainer = document.querySelector('.radar-map-container');
+        if (mapContainer) {
+            mapContainer.addEventListener('click', hideMapHint, { once: true });
+        }
 
         // Add Recenter Control
         const RecenterControl = L.Control.extend({
@@ -879,6 +905,9 @@ async function onMapClick(e) {
         .setContent('<div style="text-align:center;">Carregando dados...</div>')
         .openOn(map);
 
+    // Hide the map interaction hint immediately when user clicks the map
+    hideMapHint();
+
     try {
         // Fetch weather and air pollution for clicked location
         const [weatherRes, aqiRes] = await Promise.all([
@@ -965,6 +994,7 @@ function initializeRadarControls() {
             button.classList.add('active');
 
             switchWeatherLayer(button.getAttribute('data-layer'));
+            hideMapHint();
         });
     });
 }
