@@ -414,6 +414,25 @@ function displayCurrentWeather(data, customLocation = null) {
     if (document.getElementById('heroLocation')) document.getElementById('heroLocation').textContent = location;
     if (document.getElementById('heroIcon')) document.getElementById('heroIcon').textContent = icon;
 
+    // Detect and display severe weather alerts in hero section
+    const alerts = detectSevereWeather(data);
+    const heroAlertsContainer = document.getElementById('heroAlerts');
+    if (heroAlertsContainer) {
+        if (alerts.length > 0) {
+            heroAlertsContainer.innerHTML = alerts.map(alert => `
+                <div class="hero-alert-item" style="border-left: 4px solid ${alert.color}">
+                    <span class="hero-alert-icon">${alert.icon}</span>
+                    <div class="hero-alert-content">
+                        <strong>${alert.title}</strong>
+                        <p>${alert.message}</p>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            heroAlertsContainer.innerHTML = '';
+        }
+    }
+
     const mainDashboard = document.getElementById('mainDashboard');
     if (mainDashboard) mainDashboard.classList.remove('hidden');
 
@@ -1216,6 +1235,22 @@ async function onMapClick(e) {
         const minutes = localDate.getUTCMinutes().toString().padStart(2, '0');
         const timeString = `${hours}:${minutes}`;
 
+        // Detect severe weather conditions
+        const alerts = detectSevereWeather(data);
+        const alertsHTML = alerts.length > 0 ? `
+            <div class="weather-alerts">
+                ${alerts.map(alert => `
+                    <div class="alert-item" style="border-left: 4px solid ${alert.color}">
+                        <span class="alert-icon">${alert.icon}</span>
+                        <div class="alert-content">
+                            <strong>${alert.title}</strong>
+                            <p>${alert.message}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
+
         const content = `
             <div class="popup-content">
                 <div class="popup-location">${location}</div>
@@ -1249,6 +1284,7 @@ async function onMapClick(e) {
                     <span>Qualidade do Ar:</span>
                     <strong>${aqiText}</strong>
                 </div>
+                ${alertsHTML}
             </div>
         `;
 
@@ -1258,6 +1294,83 @@ async function onMapClick(e) {
         console.error("Map click error:", error);
         popup.setContent('<div style="color:red; text-align:center;">Erro ao carregar dados</div>');
     }
+}
+
+// ========== SEVERE WEATHER DETECTION ==========
+
+function detectSevereWeather(data) {
+    const alerts = [];
+
+    // Check heavy rain
+    const rain1h = data.rain?.['1h'] || 0;
+    const rain3h = data.rain?.['3h'] || 0;
+    if (rain1h > 20 || rain3h > 50) {
+        alerts.push({
+            type: 'heavy_rain',
+            icon: '🌧️',
+            title: 'Chuva Forte',
+            message: rain1h > 0 ? `${rain1h.toFixed(1)}mm/h` : `${rain3h.toFixed(1)}mm em 3h`,
+            color: '#ff8c00'
+        });
+    }
+
+    // Check strong winds
+    const windKmh = (data.wind?.speed || 0) * 3.6;
+    if (windKmh > 60) {
+        alerts.push({
+            type: 'strong_wind',
+            icon: '💨',
+            title: 'Vento Forte',
+            message: `Ventos de ${Math.round(windKmh)} km/h`,
+            color: '#ff8c00'
+        });
+    }
+
+    // Check thunderstorm
+    const condition = data.weather?.[0]?.main?.toLowerCase() || '';
+    if (condition.includes('thunderstorm')) {
+        alerts.push({
+            type: 'thunderstorm',
+            icon: '⛈️',
+            title: 'Tempestade',
+            message: 'Atividade de tempestade detectada',
+            color: '#ff4500'
+        });
+    }
+
+    // Check extreme temperature
+    const tempC = data.main?.temp || 0;
+    if (tempC > 40) {
+        alerts.push({
+            type: 'extreme_heat',
+            icon: '🌡️',
+            title: 'Calor Extremo',
+            message: `Temperatura de ${Math.round(tempC)}°C`,
+            color: '#ff4500'
+        });
+    } else if (tempC < 0) {
+        alerts.push({
+            type: 'extreme_cold',
+            icon: '🌡️',
+            title: 'Frio Extremo',
+            message: `Temperatura de ${Math.round(tempC)}°C`,
+            color: '#4169e1'
+        });
+    }
+
+    // Check poor visibility
+    const visibilityKm = (data.visibility || 10000) / 1000;
+    if (visibilityKm < 1) {
+        alerts.push({
+            type: 'poor_visibility',
+            icon: '🌫️',
+            title: 'Visibilidade Baixa',
+            message: `Apenas ${visibilityKm.toFixed(1)}km de visibilidade`,
+            color: '#ffa500'
+        });
+    }
+
+    return alerts;
 }
 
 // ========== RADAR MAP CONTROLS ==========
