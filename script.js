@@ -1331,58 +1331,42 @@ function initializeModalLogic() {
 /**
  * Utility to enable click-and-drag scrolling on desktop and mobile
  */
+/**
+ * Utility to enable click-and-drag scrolling ONLY for mouse users.
+ * Stripped down and touch-protected to prevent any mobile conflict.
+ */
 function initDragToScroll(el) {
-    if (!el) return;
+    // If it's a touch device, bail immediately. Browser handles this perfectly.
+    if (!el || window.matchMedia("(pointer: coarse)").matches) return;
 
     let isDown = false;
     let startX;
     let scrollLeft;
 
     const start = (e) => {
+        if (e.button !== 0) return;
         isDown = true;
-        el.classList.add('dragging');
-
-        // Disable scroll-snap during dragging to prevent "fighting"
-        el.style.scrollSnapType = 'none';
-        el.style.scrollBehavior = 'auto';
-
-        const pageX = (e.type.startsWith('touch')) ? e.touches[0].pageX : e.pageX;
-        startX = pageX - el.offsetLeft;
+        el.style.cursor = 'grabbing';
+        startX = e.pageX - el.offsetLeft;
         scrollLeft = el.scrollLeft;
     };
 
     const stop = () => {
-        if (!isDown) return;
         isDown = false;
-        el.classList.remove('dragging');
-
-        // Restore default behavior
-        el.style.scrollSnapType = '';
-        el.style.scrollBehavior = '';
+        el.style.cursor = 'grab';
     };
 
     const move = (e) => {
         if (!isDown) return;
-
-        const pageX = (e.type.startsWith('touch')) ? e.touches[0].pageX : e.pageX;
-        const x = pageX - el.offsetLeft;
+        e.preventDefault();
+        const x = e.pageX - el.offsetLeft;
         const walk = (x - startX) * 2;
-
-        // Prioritize horizontal drag over vertical scroll
-        if (Math.abs(x - startX) > 10) {
-            if (e.cancelable) e.preventDefault();
-            el.scrollLeft = scrollLeft - walk;
-        }
+        el.scrollLeft = scrollLeft - walk;
     };
 
-    // Mouse
     el.addEventListener('mousedown', start);
     window.addEventListener('mouseup', stop);
     el.addEventListener('mouseleave', stop);
     el.addEventListener('mousemove', move);
-
-    // Touch
-    el.addEventListener('touchstart', start, { passive: true });
-    el.addEventListener('touchend', stop);
-    el.addEventListener('touchmove', move, { passive: false });
+    el.style.cursor = 'grab';
 }
