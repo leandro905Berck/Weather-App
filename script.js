@@ -1358,7 +1358,7 @@ function detectSevereWeather(data) {
             type: 'extreme_heat',
             icon: '🌡️',
             title: 'Calor Extremo',
-            message: `Temperatura de ${Math.round(tempC)}°C`,
+            message: `Temperatura de ${formatTemp(tempC)}`,
             color: '#ff4500'
         });
     } else if (tempC < 0) {
@@ -1366,7 +1366,7 @@ function detectSevereWeather(data) {
             type: 'extreme_cold',
             icon: '🌡️',
             title: 'Frio Extremo',
-            message: `Temperatura de ${Math.round(tempC)}°C`,
+            message: `Temperatura de ${formatTemp(tempC)}`,
             color: '#4169e1'
         });
     }
