@@ -131,18 +131,18 @@
                 </div>
             </section>
 
-            <!-- Row 1: Summary -->
-            <div class="dashboard-top">
-                <section class="dashboard-card forecast-summary-card">
-                    <div class="card-header">
-                        <h3 class="card-title">📅 Previsão para 5 dias</h3>
-                    </div>
-                    <div class="forecast-list" id="forecastSummaryList">
-                        <!-- Dynamic items -->
-                    </div>
-                    <button class="btn-text">Mais detalhes ▸</button>
-                </section>
-            </div>
+            <!-- Row 1: Forecast Summary -->
+            <section class="dashboard-hero forecast-hero-redesign">
+                <div class="card-header">
+                    <h3 class="card-title">📅 Previsão para 5 dias</h3>
+                </div>
+                <div class="forecast-list-horizontal" id="forecastSummaryList">
+                    <!-- Dynamic items rendered as cards -->
+                </div>
+                <div class="hero-hourly" id="heroHourlyList">
+                    <!-- Hourly items dynamically rendered -->
+                </div>
+            </section>
 
             <!-- Row 2: Detail Grid -->
             <div class="dashboard-grid">
@@ -245,6 +245,42 @@
                     </div>
                 </section>
 
+                <!-- Cloudiness Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Nebulosidade</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="clouds">30%</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="cloudsGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-icon">☁️</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Visibility Card -->
+                <section class="dashboard-card detail-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Visibilidade</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="main-value" id="visibility">10</div>
+                        <div class="gauge-container">
+                            <svg viewBox="0 0 100 60" class="gauge">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
+                                <path id="visibilityGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                    stroke-dasharray="0, 1000" />
+                            </svg>
+                            <div class="gauge-icon-unit">km</div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Pressure Card -->
                 <section class="dashboard-card detail-card">
                     <div class="card-header">
@@ -259,6 +295,23 @@
                                     stroke-dasharray="0, 1000" />
                             </svg>
                             <div class="gauge-icon-unit" id="pressureUnit">atm</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Moon Phase Card -->
+                <section class="dashboard-card detail-card moon-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Fase da Lua</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="moon-display">
+                            <div id="moonIcon" class="moon-icon">🌑</div>
+                            <div class="moon-phase-info">
+                                <span id="moonPhaseName" class="main-value-small">Lua Nova</span>
+                                <span id="moonIllumination" class="sub-value">0% iluminada</span>
+                                <span id="moonNextPhase" class="sub-value next-phase-text"></span>
+                            </div>
                         </div>
                     </div>
                 </section>

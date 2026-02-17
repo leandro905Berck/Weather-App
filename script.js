@@ -7,6 +7,9 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// State Management
+let selectedDateLabel = null;
+
 // OpenWeatherMap API Configuration
 const API_KEY = '5fa880cce39ad7197758233da7e0c7da';
 const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
@@ -36,6 +39,9 @@ const sunsetTime = document.getElementById('sunsetTime');
 const currentSunTime = document.getElementById('currentSunTime');
 const sunPathActive = document.getElementById('sunPathActive');
 const sunPoint = document.getElementById('sunPoint');
+const moonIcon = document.getElementById('moonIcon');
+const moonPhaseName = document.getElementById('moonPhaseName');
+const moonIllumination = document.getElementById('moonIllumination');
 
 // Unit Elements
 const tempUnitToggle = document.getElementById('tempUnitToggle');
@@ -141,16 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Modal Logic
     initializeModalLogic();
 
-    // Forecast Details Button (Scroll to Detailed Forecast)
-    const detailsBtn = document.querySelector('.forecast-summary-card .btn-text');
-    if (detailsBtn) {
-        detailsBtn.addEventListener('click', () => {
-            const detailedForecastSection = document.getElementById('detailedForecastSection');
-            if (detailedForecastSection) {
-                detailedForecastSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    }
+    // Initialize drag-to-scroll for horizontal lists
+    const hourlyList = document.getElementById('heroHourlyList');
+    const forecastSummaryList = document.getElementById('forecastSummaryList');
+
+    if (hourlyList) initDragToScroll(hourlyList);
+    if (forecastSummaryList) initDragToScroll(forecastSummaryList);
 });
 
 function initializeUnitControls() {
@@ -436,9 +438,18 @@ function displayCurrentWeather(data, customLocation = null) {
     // Pressure Card
     if (document.getElementById('pressure')) document.getElementById('pressure').textContent = pressure.split(' ')[0];
     if (document.getElementById('pressureUnit')) document.getElementById('pressureUnit').textContent = units.pressure === 'hPa' ? 'hPa' : units.pressure;
-    // Pressure gauge: typically 950-1050 range for sea level. Scale it.
     const pPercent = ((pressureValue - 950) / 100) * 100;
     updateGauge('pressureGauge', Math.max(0, Math.min(100, pPercent)), 100);
+
+    // Visibility Card
+    const visibilityKm = data.visibility / 1000;
+    if (document.getElementById('visibility')) document.getElementById('visibility').textContent = visibilityKm.toFixed(1);
+    updateGauge('visibilityGauge', visibilityKm, 10); // Scale max 10km
+
+    // Cloudiness Card
+    const cloudiness = data.clouds.all;
+    if (document.getElementById('clouds')) document.getElementById('clouds').textContent = `${cloudiness}%`;
+    updateGauge('cloudsGauge', cloudiness, 100);
 
     // Initialize or update radar map
     const lat = data.coord.lat;
@@ -553,33 +564,156 @@ function displayChartForecast(data) {
     displayForecastSummary(data);
 }
 
-// Render the 5-Day summary list
+// Render the 5-Day summary list (Redesigned Horizontal Cards)
+// Render the 5-Day summary list (Redesigned Horizontal Cards)
 function displayForecastSummary(data) {
     const list = document.getElementById('forecastSummaryList');
     if (!list) return;
     list.innerHTML = '';
 
-    // Group by day and get noon forecast or avg
+    // Group by day to calculate real min/max
     const dailyData = {};
     data.list.forEach(item => {
-        const date = new Date(item.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'long' });
-        if (!dailyData[date]) dailyData[date] = item;
+        const dateKey = new Date(item.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'short' });
+        if (!dailyData[dateKey]) {
+            dailyData[dateKey] = {
+                items: [],
+                min: item.main.temp_min,
+                max: item.main.temp_max,
+                icon: item.weather[0].icon
+            };
+        }
+        dailyData[dateKey].items.push(item);
+        dailyData[dateKey].min = Math.min(dailyData[dateKey].min, item.main.temp_min);
+        dailyData[dateKey].max = Math.max(dailyData[dateKey].max, item.main.temp_max);
+
+        const hour = new Date(item.dt * 1000).getHours();
+        if (hour >= 11 && hour <= 13) {
+            dailyData[dateKey].icon = item.weather[0].icon;
+        }
     });
 
-    Object.keys(dailyData).slice(0, 5).forEach((day, index) => {
-        const item = dailyData[day];
-        const icon = weatherIcons[item.weather[0].icon] || '🌤️';
-        const dayLabel = index === 0 ? 'Hoje' : (index === 1 ? 'Amanhã' : day.split('-')[0].charAt(0).toUpperCase() + day.split('-')[0].slice(1, 3) + '.');
+    const days = Object.keys(dailyData);
+    if (!selectedDateLabel) selectedDateLabel = days[0];
+
+    // Initial hourly display
+    if (dailyData[selectedDateLabel]) {
+        displayHourlyForecast(dailyData[selectedDateLabel].items);
+    }
+
+    days.slice(0, 7).forEach((day, index) => {
+        const dayInfo = dailyData[day];
+        const icon = weatherIcons[dayInfo.icon] || '🌤️';
+        const dayLabel = index === 0 ? 'hoje' : day.replace('.', '');
 
         const div = document.createElement('div');
-        div.className = 'forecast-summary-item';
+        div.className = `forecast-card-item ${day === selectedDateLabel ? 'active' : ''}`;
+        div.style.cursor = 'pointer';
         div.innerHTML = `
-            <span>${dayLabel}</span>
-            <span>${icon}</span>
-            <span class="forecast-item-temp">${formatTemp(item.main.temp)}</span>
+            <span class="forecast-day-name">${dayLabel}</span>
+            <span class="forecast-icon-sm">${icon}</span>
+            <div class="forecast-temps-row">
+                <span class="max">${Math.round(dayInfo.max)}°</span> / 
+                <span class="min">${Math.round(dayInfo.min)}°</span>
+            </div>
+        `;
+
+        div.onclick = () => {
+            selectedDateLabel = day;
+            document.querySelectorAll('.forecast-card-item').forEach(el => el.classList.remove('active'));
+            div.classList.add('active');
+
+            // Update Hourly Row in Hero Card
+            displayHourlyForecast(dayInfo.items);
+
+            // Update Chart at the bottom
+            updateChart();
+        };
+
+        list.appendChild(div);
+    });
+
+    // Update Moon Phase
+    updateMoonPhase();
+}
+
+/**
+ * Renders the horizontal hourly forecast list in the Hero section
+ */
+function displayHourlyForecast(items) {
+    const list = document.getElementById('heroHourlyList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    items.forEach(item => {
+        const time = new Date(item.dt * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const icon = weatherIcons[item.weather[0].icon] || '🌤️';
+        const temp = Math.round(item.main.temp);
+
+        const div = document.createElement('div');
+        div.className = 'hourly-item';
+        div.innerHTML = `
+            <span class="hourly-temp">${temp}°</span>
+            <span class="hourly-icon">${icon}</span>
+            <span class="hourly-time">${time}</span>
         `;
         list.appendChild(div);
     });
+}
+
+/**
+ * Calculates moon phase based on the current date
+ * Returns an object with icon, name, and illumination percentage
+ */
+function updateMoonPhase() {
+    if (!moonIcon || !moonPhaseName || !moonIllumination) return;
+
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    // Astronomically calculated moon phase (simplified Conway's algorithm)
+    // 0 = New Moon, 0.5 = Full Moon, 1.0 = New Moon again
+    const getPhase = (y, m, d) => {
+        let r = y % 100;
+        r %= 19;
+        if (r > 9) r -= 19;
+        r = ((r * 11) % 30) + m + d;
+        if (m < 3) r += 2;
+        r -= ((y < 2000) ? 4 : 8.3);
+        r = Math.floor(r + 0.5) % 30;
+        return (r < 0) ? r + 30 : r;
+    };
+
+    const phaseDays = getPhase(year, month, day);
+    const phaseFraction = phaseDays / 30;
+
+    let icon = '🌑';
+    let name = 'Lua Nova';
+    let illumination = 0;
+
+    if (phaseDays === 0) {
+        icon = '🌑'; name = 'Lua Nova'; illumination = 0;
+    } else if (phaseDays < 7.5) {
+        icon = '🌒'; name = 'Lua Crescente'; illumination = (phaseDays / 7.5) * 50;
+    } else if (phaseDays === 7.5) {
+        icon = '🌓'; name = 'Quarto Crescente'; illumination = 50;
+    } else if (phaseDays < 15) {
+        icon = '🌔'; name = 'Gibosa Crescente'; illumination = 50 + ((phaseDays - 7.5) / 7.5) * 50;
+    } else if (phaseDays === 15) {
+        icon = '🌕'; name = 'Lua Cheia'; illumination = 100;
+    } else if (phaseDays < 22.5) {
+        icon = '🌖'; name = 'Gibosa Minguante'; illumination = 100 - ((phaseDays - 15) / 7.5) * 50;
+    } else if (phaseDays === 22.5) {
+        icon = '🌗'; name = 'Quarto Minguante'; illumination = 50;
+    } else {
+        icon = '🌘'; name = 'Lua Minguante'; illumination = 50 - ((phaseDays - 22.5) / 7.5) * 50;
+    }
+
+    moonIcon.textContent = icon;
+    moonPhaseName.textContent = name;
+    moonIllumination.textContent = `${Math.round(illumination)}% iluminada`;
 }
 
 function updateChart() {
@@ -598,7 +732,16 @@ function updateChart() {
     if (currentWeatherData) fullList.push({ ...currentWeatherData, pop: 0 });
     fullList = fullList.concat(currentChartData.list);
 
-    let filteredList = currentTimeRange === '24h' ? fullList.slice(0, 9) : fullList;
+    let filteredList = [];
+    if (selectedDateLabel) {
+        // Filter by the selected day
+        filteredList = fullList.filter(item => {
+            const itemDay = new Date(item.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'short' });
+            return itemDay === selectedDateLabel;
+        });
+    } else {
+        filteredList = currentTimeRange === '24h' ? fullList.slice(0, 9) : fullList;
+    }
     const labels = [];
     const values = [];
 
@@ -1183,4 +1326,63 @@ function initializeModalLogic() {
             modal.classList.remove('active');
         }
     });
+}
+
+/**
+ * Utility to enable click-and-drag scrolling on desktop and mobile
+ */
+function initDragToScroll(el) {
+    if (!el) return;
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    const start = (e) => {
+        isDown = true;
+        el.classList.add('dragging');
+
+        // Disable scroll-snap during dragging to prevent "fighting"
+        el.style.scrollSnapType = 'none';
+        el.style.scrollBehavior = 'auto';
+
+        const pageX = (e.type.startsWith('touch')) ? e.touches[0].pageX : e.pageX;
+        startX = pageX - el.offsetLeft;
+        scrollLeft = el.scrollLeft;
+    };
+
+    const stop = () => {
+        if (!isDown) return;
+        isDown = false;
+        el.classList.remove('dragging');
+
+        // Restore default behavior
+        el.style.scrollSnapType = '';
+        el.style.scrollBehavior = '';
+    };
+
+    const move = (e) => {
+        if (!isDown) return;
+
+        const pageX = (e.type.startsWith('touch')) ? e.touches[0].pageX : e.pageX;
+        const x = pageX - el.offsetLeft;
+        const walk = (x - startX) * 2;
+
+        // Prioritize horizontal drag over vertical scroll
+        if (Math.abs(x - startX) > 10) {
+            if (e.cancelable) e.preventDefault();
+            el.scrollLeft = scrollLeft - walk;
+        }
+    };
+
+    // Mouse
+    el.addEventListener('mousedown', start);
+    window.addEventListener('mouseup', stop);
+    el.addEventListener('mouseleave', stop);
+    el.addEventListener('mousemove', move);
+
+    // Touch
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchend', stop);
+    el.addEventListener('touchmove', move, { passive: false });
 }
