@@ -390,20 +390,22 @@ function updateWeatherDisplay(customLocation = null) {
 
 // Display current weather in Dashboard
 function displayCurrentWeather(data, customLocation = null) {
+    if (!data) return;
     currentWeatherData = data; // Store for chart use
 
-    const location = customLocation || `${data.name}, ${data.sys.country}`;
-    const tempValueNumeric = Math.round(data.main.temp);
-    const temp = formatTemp(data.main.temp);
-    const description = data.weather[0].description;
-    const icon = weatherIcons[data.weather[0].icon] || '🌤️';
-    const humidity = data.main.humidity;
-    const windKmh = data.wind.speed * 3.6;
+    const location = customLocation || (data.name ? `${data.name}, ${data.sys?.country || ''}` : 'Localização Desconhecida');
+    const tempK = data.main?.temp || 0;
+    const temp = formatTemp(tempK);
+    const description = data.weather?.[0]?.description || "Sem descrição";
+    const icon = weatherIcons[data.weather?.[0]?.icon] || '🌤️';
+    const humidity = data.main?.humidity || 0;
+    const windSpeedReal = data.wind?.speed || 0;
+    const windKmh = windSpeedReal * 3.6;
     const windSpeed = formatWind(windKmh);
-    const pressureValue = data.main.pressure;
+    const pressureValue = data.main?.pressure || 0;
     const pressure = formatPressure(pressureValue);
     const uvValue = data.uvi !== undefined ? Math.round(data.uvi) : 0;
-    const windDegree = data.wind.deg !== undefined ? data.wind.deg : 0;
+    const windDegree = data.wind?.deg !== undefined ? data.wind.deg : 0;
     const windDirCardinal = getWindDirection(windDegree);
 
     // Update Hero Section
@@ -411,9 +413,6 @@ function displayCurrentWeather(data, customLocation = null) {
     if (document.getElementById('heroDescription')) document.getElementById('heroDescription').textContent = description.charAt(0).toUpperCase() + description.slice(1);
     if (document.getElementById('heroLocation')) document.getElementById('heroLocation').textContent = location;
     if (document.getElementById('heroIcon')) document.getElementById('heroIcon').textContent = icon;
-
-    // Update Global Headers (fallback) - Removed city name update to preserve app title
-    // Preserving "Weather App BR" as requested by user
 
     const mainDashboard = document.getElementById('mainDashboard');
     if (mainDashboard) mainDashboard.classList.remove('hidden');
@@ -437,7 +436,7 @@ function displayCurrentWeather(data, customLocation = null) {
 
     // Feels Like Card
     if (document.getElementById('feelsLike')) document.getElementById('feelsLike').textContent = temp;
-    updateGauge('tempGauge', data.main.temp, 50); // Scale 0-50 C
+    updateGauge('tempGauge', data.main?.temp || 0, 50); // Scale 0-50 C
 
     // Wind Card
     if (document.getElementById('windDirName')) document.getElementById('windDirName').textContent = windDirCardinal;
@@ -453,19 +452,18 @@ function displayCurrentWeather(data, customLocation = null) {
     updateGauge('pressureGauge', Math.max(0, Math.min(100, pPercent)), 100);
 
     // Visibility Card
-    const visibilityKm = data.visibility / 1000;
+    const visibilityKm = (data.visibility || 10000) / 1000;
     if (document.getElementById('visibility')) document.getElementById('visibility').textContent = visibilityKm.toFixed(1);
     updateGauge('visibilityGauge', visibilityKm, 10); // Scale max 10km
 
     // Cloudiness Card
-    const cloudiness = data.clouds.all;
+    const cloudiness = data.clouds?.all || 0;
     if (document.getElementById('clouds')) document.getElementById('clouds').textContent = `${cloudiness}%`;
     updateGauge('cloudsGauge', cloudiness, 100);
 
     // Initialize or update radar map
-    const lat = data.coord.lat;
-    const lon = data.coord.lon;
-    initializeMap(lat, lon);
+    const coords = data.coord || { lat: 0, lon: 0 };
+    initializeMap(coords.lat, coords.lon);
 }
 
 // Helper to update SVG gauge fill
@@ -757,6 +755,7 @@ function updateChart() {
     const values = [];
 
     filteredList.forEach(item => {
+        if (!item) return;
         const date = new Date(item.dt * 1000);
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -766,11 +765,15 @@ function updateChart() {
 
         let val;
         if (currentMetric === 'temp') {
-            val = item.main.temp;
+            val = item.main?.temp || 0;
             if (units.temp === 'F') val = (val * 9 / 5) + 32;
             val = Math.round(val);
-        } else {
-            val = currentMetric === 'rain' ? Math.round((item.pop || 0) * 100) : (currentMetric === 'clouds' ? item.clouds.all : Math.round(item.wind.speed * 3.6));
+        } else if (currentMetric === 'rain') {
+            val = Math.round((item.pop || 0) * 100);
+        } else if (currentMetric === 'clouds') {
+            val = item.clouds?.all || 0;
+        } else if (currentMetric === 'wind') {
+            val = Math.round((item.wind?.speed || 0) * 3.6);
         }
         values.push(val);
     });
@@ -1244,7 +1247,7 @@ function displayPwsWeather(obs) {
     // Create a data object compatible with existing display logic where possible
     const data = {
         name: obs.neighborhood || "Pirassununga",
-        sys: { country: obs.country, sunrise: 0, sunset: 0 }, // We'll handle sun path carefully
+        sys: { country: obs.country, sunrise: 0, sunset: 0 },
         main: {
             temp: metric.temp,
             feels_like: metric.heatIndex || metric.temp,
@@ -1252,13 +1255,12 @@ function displayPwsWeather(obs) {
             pressure: metric.pressure
         },
         wind: {
-            speed: metric.windSpeed / 3.6, // PWS is m, but our logic expects speed*3.6 to get kmh? 
-            // Actually the PWS units=m means windSpeed is km/h already. 
-            // My formatWind takes kmh. My displayCurrentWeather takes speed*3.6.
-            // If I pass metric.windSpeed / 3.6 to 'data.wind.speed', then displayCurrentWeather will do (metric.windSpeed/3.6)*3.6 = metric.windSpeed. OK.
+            speed: metric.windSpeed / 3.6,
             deg: obs.winddir
         },
-        weather: [{ description: "Dados da Estação Local", icon: "01d" }], // Station icon
+        weather: [{ description: "Dados da Estação Local", icon: "01d" }],
+        clouds: { all: 0 }, // PWS typically doesn't send cloud cover
+        visibility: 10000,   // Default visibility
         coord: { lat: obs.lat, lon: obs.lon },
         uvi: obs.uv || 0,
         dt: obs.epoch
