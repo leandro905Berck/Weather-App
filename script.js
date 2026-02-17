@@ -477,7 +477,7 @@ function displayCurrentWeather(data, customLocation = null) {
     updateGauge('humidityGauge', humidity, 100);
 
     // Feels Like Card
-    if (document.getElementById('feelsLike')) document.getElementById('feelsLike').textContent = temp;
+    if (document.getElementById('feelsLike')) document.getElementById('feelsLike').textContent = formatTemp(data.main?.feels_like || data.main?.temp || 0);
     updateGauge('tempGauge', data.main?.temp || 0, 50); // Scale 0-50 C
 
     // Wind Card
