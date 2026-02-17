@@ -153,6 +153,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hourlyList) initDragToScroll(hourlyList);
     if (forecastSummaryList) initDragToScroll(forecastSummaryList);
+
+    // Scroll to detailed forecast
+    const viewDetailedBtn = document.getElementById('viewDetailedForecast');
+    if (viewDetailedBtn) {
+        viewDetailedBtn.addEventListener('click', () => {
+            const detailSection = document.getElementById('detailedForecastSection');
+            if (detailSection) {
+                detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    }
 });
 
 function initializeUnitControls() {
@@ -871,6 +882,11 @@ function initializeChartControls() {
             rangeButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             currentTimeRange = button.getAttribute('data-range');
+
+            // Core Fix: Reset daily selection when global range is clicked
+            selectedDateLabel = null;
+            document.querySelectorAll('.forecast-card-item').forEach(el => el.classList.remove('active'));
+
             updateChart();
         };
     });

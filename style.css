@@ -626,6 +626,36 @@ body::before {
   margin-bottom: var(--spacing-md);
 }
 
+.forecast-actions-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid hsla(0, 0%, 100%, 0.05);
+  margin-top: var(--spacing-sm);
+}
+
+.btn-details-nav {
+  background: hsla(230, 70%, 60%, 0.15);
+  border: 1px solid hsla(230, 70%, 60%, 0.3);
+  color: var(--color-primary);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.btn-details-nav:hover {
+  background: var(--color-primary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px hsla(230, 70%, 60%, 0.3);
+}
+
 .forecast-list-horizontal,
 .hero-hourly {
   display: flex !important;
