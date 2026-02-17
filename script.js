@@ -631,6 +631,8 @@ function displayForecastSummary(data) {
     });
 
     const days = Object.keys(dailyData);
+
+    // Set selectedDateLabel to first day if not already set
     if (!selectedDateLabel) selectedDateLabel = days[0];
 
     // Initial hourly display
@@ -660,11 +662,8 @@ function displayForecastSummary(data) {
             document.querySelectorAll('.forecast-card-item').forEach(el => el.classList.remove('active'));
             div.classList.add('active');
 
-            // Update Hourly Row in Hero Card
+            // Update Hourly Row in Hero Card only (don't affect the chart)
             displayHourlyForecast(dayInfo.items);
-
-            // Update Chart at the bottom
-            updateChart();
         };
 
         list.appendChild(div);
@@ -824,16 +823,9 @@ function updateChart() {
     if (currentWeatherData) fullList.push({ ...currentWeatherData, pop: 0 });
     fullList = fullList.concat(currentChartData.list);
 
-    let filteredList = [];
-    if (selectedDateLabel) {
-        // Filter by the selected day
-        filteredList = fullList.filter(item => {
-            const itemDay = new Date(item.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'short' });
-            return itemDay === selectedDateLabel;
-        });
-    } else {
-        filteredList = currentTimeRange === '24h' ? fullList.slice(0, 9) : fullList;
-    }
+    // Chart always shows time-based ranges (24h or 5d), not filtered by selected day
+    const filteredList = currentTimeRange === '24h' ? fullList.slice(0, 9) : fullList;
+
     const labels = [];
     const values = [];
 
@@ -1292,7 +1284,10 @@ async function fetchPwsData() {
 
         const observation = pwsData.observations[0];
 
-        // 2. Fetch Forecast from OpenWeatherMap for Pirassununga (since PWS has no forecast)
+        // 2. Display PWS Current Weather Data first
+        displayPwsWeather(observation);
+
+        // 3. Fetch and display Forecast from OpenWeatherMap for Pirassununga
         // We use the lat/lon from the PWS observation to ensure we get the right forecast area
         const lat = observation.lat;
         const lon = observation.lon;
@@ -1304,11 +1299,12 @@ async function fetchPwsData() {
         if (forecastRes.ok) {
             const forecastData = await forecastRes.json();
             currentChartData = forecastData;
+
+            // Reset day selection to show all forecast data
+            selectedDateLabel = null;
+
             displayChartForecast(forecastData);
         }
-
-        // 3. Display PWS Data
-        displayPwsWeather(observation);
 
         hideLoading();
         hideError();
@@ -1335,7 +1331,9 @@ function displayPwsWeather(obs) {
             temp: metric.temp,
             feels_like: metric.heatIndex || metric.temp,
             humidity: obs.humidity,
-            pressure: metric.pressure
+            pressure: metric.pressure,
+            temp_min: metric.temp, // Add for chart compatibility
+            temp_max: metric.temp  // Add for chart compatibility
         },
         wind: {
             speed: metric.windSpeed / 3.6,
@@ -1346,8 +1344,13 @@ function displayPwsWeather(obs) {
         visibility: 10000,   // Default visibility
         coord: { lat: obs.lat, lon: obs.lon },
         uvi: obs.uv || 0,
-        dt: obs.epoch
+        dt: Math.floor(obs.epoch / 1000), // Convert milliseconds to seconds for compatibility
+        pop: 0 // Add precipitation probability for chart
     };
+
+    // Store PWS data in global state for chart use
+    currentResponseData = data;
+    currentWeatherData = data;
 
     // Update the Dashboard using existing logic
     displayCurrentWeather(data, locationName);
