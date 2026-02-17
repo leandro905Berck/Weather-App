@@ -67,6 +67,7 @@ let currentResponseData = null; // Store last full current weather response
 let currentAqiData = null;      // Store AQI data
 let currentWeatherData = null;  // Store current weather for chart context
 let currentChartData = null;    // Store data for switching views
+let isPwsMode = false;          // Track if displaying PWS data
 
 // Chart Variables
 let weatherChart = null;
@@ -386,6 +387,8 @@ function updateWeatherDisplay(customLocation = null) {
     displayCurrentWeather(currentResponseData, customLocation);
     if (weatherChart) updateChart();
     displaySunPath(currentResponseData);
+    // Update forecast cards to reflect new temperature unit
+    if (currentChartData) displayForecastSummary(currentChartData);
 }
 
 // Display current weather in Dashboard
@@ -410,8 +413,18 @@ function displayCurrentWeather(data, customLocation = null) {
 
     // Update Hero Section
     if (document.getElementById('heroTempValue')) document.getElementById('heroTempValue').textContent = temp;
-    if (document.getElementById('heroDescription')) document.getElementById('heroDescription').textContent = description.charAt(0).toUpperCase() + description.slice(1);
-    if (document.getElementById('heroLocation')) document.getElementById('heroLocation').textContent = location;
+
+    // Only update description if not in PWS mode (PWS mode sets custom HTML with owner credit)
+    if (!isPwsMode && document.getElementById('heroDescription')) {
+        document.getElementById('heroDescription').textContent = description.charAt(0).toUpperCase() + description.slice(1);
+    }
+
+    if (document.getElementById('heroLocation')) {
+        // Only update location if not in PWS mode (PWS mode sets custom station name)
+        if (!isPwsMode) {
+            document.getElementById('heroLocation').textContent = location;
+        }
+    }
     if (document.getElementById('heroIcon')) document.getElementById('heroIcon').textContent = icon;
 
     // Detect and display severe weather alerts in hero section
@@ -671,8 +684,8 @@ function displayForecastSummary(data) {
             <span class="forecast-day-name">${dayLabel}</span>
             <span class="forecast-icon-sm">${icon}</span>
             <div class="forecast-temps-row">
-                <span class="max">${Math.round(dayInfo.max)}°</span> / 
-                <span class="min">${Math.round(dayInfo.min)}°</span>
+                <span class="max">${formatTemp(dayInfo.max)}</span> / 
+                <span class="min">${formatTemp(dayInfo.min)}</span>
             </div>
         `;
 
@@ -1464,6 +1477,7 @@ function displayPwsWeather(obs) {
     // Store PWS data in global state for chart use
     currentResponseData = data;
     currentWeatherData = data;
+    isPwsMode = true; // Mark that we're in PWS mode
 
     // Update the Dashboard using existing logic
     displayCurrentWeather(data, locationName);
