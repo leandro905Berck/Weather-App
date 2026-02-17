@@ -271,20 +271,21 @@
                     </div>
                 </section>
 
-                <!-- Visibility Card -->
+                <!-- Air Quality Card -->
                 <section class="dashboard-card detail-card">
                     <div class="card-header">
-                        <h3 class="card-title">Visibilidade</h3>
+                        <h3 class="card-title">Qualidade do Ar</h3>
                     </div>
                     <div class="card-content">
-                        <div class="main-value" id="visibility">10</div>
+                        <div class="main-value" id="aqiValue">--</div>
+                        <div class="sub-value" id="aqiLabel">Carregando...</div>
                         <div class="gauge-container">
                             <svg viewBox="0 0 100 60" class="gauge">
                                 <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
-                                <path id="visibilityGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
+                                <path id="aqiGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
                                     stroke-dasharray="0, 1000" />
                             </svg>
-                            <div class="gauge-icon-unit">km</div>
+                            <div class="gauge-icon">🍃</div>
                         </div>
                     </div>
                 </section>

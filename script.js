@@ -451,10 +451,34 @@ function displayCurrentWeather(data, customLocation = null) {
     const pPercent = ((pressureValue - 950) / 100) * 100;
     updateGauge('pressureGauge', Math.max(0, Math.min(100, pPercent)), 100);
 
-    // Visibility Card
-    const visibilityKm = (data.visibility || 10000) / 1000;
-    if (document.getElementById('visibility')) document.getElementById('visibility').textContent = visibilityKm.toFixed(1);
-    updateGauge('visibilityGauge', visibilityKm, 10); // Scale max 10km
+    // Air Quality Card
+    if (currentAqiData && currentAqiData.list && currentAqiData.list[0]) {
+        const aqi = currentAqiData.list[0].main.aqi;
+        const aqiLabels = ['Boa', 'Moderada', 'Ruim', 'Muito Ruim', 'Péssima'];
+        const aqiColors = ['#00e400', '#ffff00', '#ff7e00', '#ff0000', '#8f3f97'];
+
+        const aqiText = aqiLabels[aqi - 1] || 'Desconhecida';
+        const aqiColor = aqiColors[aqi - 1] || '#888';
+
+        if (document.getElementById('aqiValue')) {
+            document.getElementById('aqiValue').textContent = aqi;
+            document.getElementById('aqiValue').style.color = aqiColor;
+        }
+        if (document.getElementById('aqiLabel')) {
+            document.getElementById('aqiLabel').textContent = aqiText;
+        }
+
+        // Update gauge with color
+        updateGauge('aqiGauge', aqi, 5);
+        const aqiGauge = document.getElementById('aqiGauge');
+        if (aqiGauge) {
+            aqiGauge.style.stroke = aqiColor;
+        }
+    } else {
+        // No AQI data available
+        if (document.getElementById('aqiValue')) document.getElementById('aqiValue').textContent = '--';
+        if (document.getElementById('aqiLabel')) document.getElementById('aqiLabel').textContent = 'Indisponível';
+    }
 
     // Cloudiness Card
     const cloudiness = data.clouds?.all || 0;
@@ -583,22 +607,26 @@ function displayForecastSummary(data) {
     // Group by day to calculate real min/max
     const dailyData = {};
     data.list.forEach(item => {
-        const dateKey = new Date(item.dt * 1000).toLocaleDateString('pt-BR', { weekday: 'short' });
-        if (!dailyData[dateKey]) {
-            dailyData[dateKey] = {
+        const date = new Date(item.dt * 1000);
+        const dateKey = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+        const fullDateKey = date.toLocaleDateString('pt-BR'); // Use full date for accurate grouping
+
+        if (!dailyData[fullDateKey]) {
+            dailyData[fullDateKey] = {
                 items: [],
                 min: item.main.temp_min,
                 max: item.main.temp_max,
-                icon: item.weather[0].icon
+                icon: item.weather[0].icon,
+                weekday: dateKey // Store weekday for display
             };
         }
-        dailyData[dateKey].items.push(item);
-        dailyData[dateKey].min = Math.min(dailyData[dateKey].min, item.main.temp_min);
-        dailyData[dateKey].max = Math.max(dailyData[dateKey].max, item.main.temp_max);
+        dailyData[fullDateKey].items.push(item);
+        dailyData[fullDateKey].min = Math.min(dailyData[fullDateKey].min, item.main.temp_min);
+        dailyData[fullDateKey].max = Math.max(dailyData[fullDateKey].max, item.main.temp_max);
 
-        const hour = new Date(item.dt * 1000).getHours();
+        const hour = date.getHours();
         if (hour >= 11 && hour <= 13) {
-            dailyData[dateKey].icon = item.weather[0].icon;
+            dailyData[fullDateKey].icon = item.weather[0].icon;
         }
     });
 
@@ -613,7 +641,7 @@ function displayForecastSummary(data) {
     days.slice(0, 7).forEach((day, index) => {
         const dayInfo = dailyData[day];
         const icon = weatherIcons[dayInfo.icon] || '🌤️';
-        const dayLabel = index === 0 ? 'hoje' : day.replace('.', '');
+        const dayLabel = index === 0 ? 'hoje' : dayInfo.weekday.replace('.', '');
 
         const div = document.createElement('div');
         div.className = `forecast-card-item ${day === selectedDateLabel ? 'active' : ''}`;
@@ -644,6 +672,61 @@ function displayForecastSummary(data) {
 
     // Update Moon Phase
     updateMoonPhase();
+}
+
+/**
+ * Interpolates 3-hour forecast data to 1-hour intervals
+ * Uses linear interpolation for temperature, repeats other properties
+ */
+function interpolateHourlyData(items) {
+    if (!items || items.length === 0) return [];
+
+    const interpolated = [];
+
+    for (let i = 0; i < items.length - 1; i++) {
+        const current = items[i];
+        const next = items[i + 1];
+
+        // Add the current item
+        interpolated.push(current);
+
+        // Calculate time difference in hours
+        const timeDiff = (next.dt - current.dt) / 3600; // Convert seconds to hours
+
+        // Only interpolate if the gap is 3 hours (standard API interval)
+        if (timeDiff === 3) {
+            // Generate 2 intermediate points (for hours +1 and +2)
+            for (let h = 1; h < 3; h++) {
+                const ratio = h / 3; // 0.33 and 0.66
+
+                const interpolatedItem = {
+                    dt: current.dt + (h * 3600), // Add hours in seconds
+                    main: {
+                        temp: current.main.temp + (next.main.temp - current.main.temp) * ratio,
+                        temp_min: current.main.temp_min + (next.main.temp_min - current.main.temp_min) * ratio,
+                        temp_max: current.main.temp_max + (next.main.temp_max - current.main.temp_max) * ratio,
+                        feels_like: current.main.feels_like + (next.main.feels_like - current.main.feels_like) * ratio,
+                        pressure: current.main.pressure,
+                        humidity: current.main.humidity
+                    },
+                    weather: current.weather, // Repeat weather condition
+                    clouds: current.clouds,
+                    wind: {
+                        speed: current.wind.speed + (next.wind.speed - current.wind.speed) * ratio,
+                        deg: current.wind.deg
+                    },
+                    pop: current.pop // Repeat precipitation probability
+                };
+
+                interpolated.push(interpolatedItem);
+            }
+        }
+    }
+
+    // Add the last item
+    interpolated.push(items[items.length - 1]);
+
+    return interpolated;
 }
 
 /**
