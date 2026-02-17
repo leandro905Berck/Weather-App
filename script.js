@@ -268,6 +268,11 @@ function getWindDirection(deg) {
 
 // Handle search button click
 function handleSearch() {
+    // Reset PWS mode when searching for a city
+    isPwsMode = false;
+    const heroDesc = document.getElementById('heroDescription');
+    if (heroDesc) heroDesc.textContent = '...'; // Clear PWS owner credit
+
     const city = cityInput.value.trim();
     if (city) {
         searchCity(city);
@@ -278,6 +283,11 @@ function handleSearch() {
 
 // Handle geolocation button click
 function handleGeolocation() {
+    // Reset PWS mode when using geolocation
+    isPwsMode = false;
+    const heroDesc = document.getElementById('heroDescription');
+    if (heroDesc) heroDesc.textContent = '...'; // Clear PWS owner credit
+
     if ('geolocation' in navigator) {
         showLoading();
         navigator.geolocation.getCurrentPosition(
