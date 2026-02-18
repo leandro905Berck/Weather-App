@@ -685,7 +685,11 @@ function displayForecastSummary(data) {
     days.slice(0, 7).forEach((day, index) => {
         const dayInfo = dailyData[day];
         const icon = weatherIcons[dayInfo.icon] || '🌤️';
-        const dayLabel = index === 0 ? 'hoje' : dayInfo.weekday.replace('.', '');
+
+        // Check if this day is actually today by comparing dates
+        const today = new Date().toLocaleDateString('pt-BR');
+        const isToday = day === today;
+        const dayLabel = isToday ? 'hoje' : dayInfo.weekday.replace('.', '');
 
         const div = document.createElement('div');
         div.className = `forecast-card-item ${day === selectedDateLabel ? 'active' : ''}`;
