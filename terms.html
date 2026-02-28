@@ -10,8 +10,6 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <meta name="google-adsense-account" content="ca-pub-1921741208227045">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1921741208227045"
-        crossorigin="anonymous"></script>
     <style>
         .content-section {
             background: rgba(255, 255, 255, 0.05);
@@ -48,6 +46,12 @@
             color: var(--color-text-primary);
         }
     </style>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    </script>
 </head>
 
 <body>
@@ -56,7 +60,8 @@
 
         <main class="content-section">
             <h1>Termos de Uso</h1>
-            <p><strong>1. Termos</strong> <br>
+            <h2>1. Termos</h2>
+            <p>
                 Ao acessar ao site Weather App BR, concorda em cumprir estes termos de serviço, todas as leis e
                 regulamentos aplicáveis ​​e concorda que é responsável pelo cumprimento de todas as leis locais
                 aplicáveis. Se você não concordar com algum desses termos, está proibido de usar ou acessar este site.
@@ -110,7 +115,10 @@
                 <a href="about.html" style="color: var(--color-text-secondary); margin: 0 10px;">Sobre Nós</a>
             </div>
         </footer>
-    </div>
+        <!-- AdSense Script Deferred -->
+        <script async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1921741208227045"
+            crossorigin="anonymous"></script>
 </body>
 
 </html>

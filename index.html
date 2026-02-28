@@ -14,10 +14,7 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <meta name="description"
         content="Aplicativo de clima moderno com previsão atual, por hora e semanal. Pesquise cidades ou use sua localização.">
-    <meta name="keywords" content="clima, tempo, previsão, meteorologia, weather">
     <meta name="google-adsense-account" content="ca-pub-1921741208227045">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1921741208227045"
-        crossorigin="anonymous"></script>
     <title>Weather App BR</title>
 
     <!-- Google Fonts -->
@@ -75,6 +72,9 @@
                 <button class="btn btn-secondary button-pws" id="pwsBtn" aria-label="Estação Pirassununga">
                     📡 Estação Pira
                 </button>
+                <button class="btn btn-secondary" id="themeToggleBtn" aria-label="Alternar Tema">
+                    🌓 Tema
+                </button>
             </div>
 
             <!-- Units Selection Panel -->
@@ -120,7 +120,7 @@
         </div>
 
         <!-- Main Dashboard -->
-        <main class="dashboard hidden" id="mainDashboard">
+        <main class="dashboard" id="mainDashboard">
             <!-- Hero Weather Section -->
             <section class="dashboard-hero">
                 <div class="hero-main">
@@ -554,9 +554,10 @@
         </section>
 
         <!-- AdSense Ad Unit - Responsive Banner -->
-        <div style="margin-top: 20px; text-align: center; min-height: 100px;">
-            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-1921741208227045"
-                data-ad-slot="3459344060" data-ad-format="auto" data-full-width-responsive="true"></ins>
+        <div
+            style="margin-top: 20px; text-align: center; min-height: 100px; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 8px;">
+            <ins class="adsbygoogle" style="display:inline-block; width:100%; max-width:970px; height:90px"
+                data-ad-client="ca-pub-1921741208227045" data-ad-slot="3459344060"></ins>
             <script>
                 (adsbygoogle = window.adsbygoogle || []).push({});
             </script>
@@ -599,7 +600,10 @@
                 </a>
             </div>
         </div>
-    </div>
+        <!-- AdSense Script Deferred -->
+        <script async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1921741208227045"
+            crossorigin="anonymous"></script>
 </body>
 
 </html>

@@ -30,6 +30,7 @@ const loadingState = document.getElementById('loadingState');
 const mainDashboard = document.getElementById('mainDashboard');
 const radarSection = document.getElementById('radarSection');
 const pwsBtn = document.getElementById('pwsBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 
 // New DOM Elements for Details
 const uvIndex = document.getElementById('uvIndex');
@@ -132,12 +133,48 @@ document.addEventListener('DOMContentLoaded', () => {
         cityInput.value = lastCity;
         searchCity(lastCity);
     } else {
-        // Auto-detect location on first load
-        handleGeolocation();
+        // Auto-detect location on first load, fallback to "São Paulo"
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    fetchWeatherByCoords(latitude, longitude);
+                },
+                () => {
+                    searchCity('São Paulo');
+                }
+            );
+        } else {
+            searchCity('São Paulo');
+        }
     }
 
     // Initialize radar map layer controls
     initializeRadarControls();
+
+    // Theme initialization
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (themeToggleBtn) themeToggleBtn.innerHTML = '🌞 Tema';
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+                themeToggleBtn.innerHTML = '🌓 Tema';
+                if (typeof updateChart === 'function') updateChart();
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                themeToggleBtn.innerHTML = '🌞 Tema';
+                if (typeof updateChart === 'function') updateChart();
+            }
+        });
+    }
 
     // Initialize Unit Controls
     initializeUnitControls();
@@ -918,6 +955,12 @@ function updateChart() {
         bgColor = 'rgba(191, 0, 255, 0.1)';
     }
 
+    const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
+    const textColorPrimary = isLightTheme ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+    const textColorSecondary = isLightTheme ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)';
+    const textColorTertiary = isLightTheme ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
+    const gridColor = isLightTheme ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+
     weatherChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -930,7 +973,7 @@ function updateChart() {
                 fill: true,
                 tension: 0.4,
                 pointRadius: 4,
-                pointBackgroundColor: '#fff',
+                pointBackgroundColor: isLightTheme ? '#f8f9fa' : '#fff',
                 pointBorderColor: borderColor,
                 pointHoverRadius: 6
             }]
@@ -950,7 +993,7 @@ function updateChart() {
             scales: {
                 x: {
                     ticks: {
-                        color: 'rgba(255,255,255,0.7)',
+                        color: textColorSecondary,
                         font: { size: 10 },
                         maxRotation: 0,
                         autoSkip: true,
@@ -962,10 +1005,10 @@ function updateChart() {
                     display: true,
                     grace: '15%',
                     ticks: {
-                        color: 'rgba(255,255,255,0.5)',
+                        color: textColorTertiary,
                         callback: (value) => value + valueSuffix
                     },
-                    grid: { color: 'rgba(255,255,255,0.05)' }
+                    grid: { color: gridColor }
                 }
             }
         },
@@ -976,7 +1019,7 @@ function updateChart() {
                 ctx.save();
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fillStyle = textColorPrimary;
                 ctx.font = 'bold 11px sans-serif';
 
                 chart.getDatasetMeta(0).data.forEach((datapoint, index) => {
