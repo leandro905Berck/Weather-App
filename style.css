@@ -485,6 +485,10 @@ body::before {
   stroke: #40d0ff;
 }
 
+#cloudsGauge {
+  stroke: #94a3b8;
+}
+
 .gauge-value {
   position: absolute;
   bottom: 0;
