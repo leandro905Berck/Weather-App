@@ -69,6 +69,7 @@ let currentAqiData = null;      // Store AQI data
 let currentWeatherData = null;  // Store current weather for chart context
 let currentChartData = null;    // Store data for switching views
 let isPwsMode = false;          // Track if displaying PWS data
+let currentActiveLayer = 'precipitation_new'; // Track active radar layer
 
 // Chart Variables
 let weatherChart = null;
@@ -436,6 +437,9 @@ function updateWeatherDisplay(customLocation = null) {
     displaySunPath(currentResponseData);
     // Update forecast cards to reflect new temperature unit
     if (currentChartData) displayForecastSummary(currentChartData);
+
+    // Update radar legend if map is initialized
+    if (map) addLegend(currentActiveLayer);
 }
 
 // Display current weather in Dashboard
@@ -474,14 +478,21 @@ function displayCurrentWeather(data, customLocation = null) {
     }
     if (document.getElementById('heroIcon')) document.getElementById('heroIcon').textContent = icon;
 
-    // Detect and display severe weather alerts in hero section
-    const alerts = detectSevereWeather(data);
+    // Detect and display alerts in hero section (Current + Upcoming)
+    let alerts = detectSevereWeather(data);
+
+    // Add upcoming rain/storm alerts from forecast
+    if (currentChartData) {
+        const upcomingAlerts = detectUpcomingRain(currentChartData);
+        alerts = [...alerts, ...upcomingAlerts];
+    }
+
     const heroAlertsContainer = document.getElementById('heroAlerts');
     if (heroAlertsContainer) {
         if (alerts.length > 0) {
             heroAlertsContainer.innerHTML = alerts.map(alert => `
-                <div class="hero-alert-item" style="border-left: 4px solid ${alert.color}">
-                    <span class="hero-alert-icon">${alert.icon}</span>
+                <div class="hero-alert-item" style="border-left: 4px solid ${alert.color || 'var(--color-primary)'}">
+                    <div class="hero-alert-icon">${alert.icon}</div>
                     <div class="hero-alert-content">
                         <strong>${alert.title}</strong>
                         <p>${alert.message}</p>
@@ -520,6 +531,10 @@ function displayCurrentWeather(data, customLocation = null) {
     // Wind Card
     if (document.getElementById('windDirName')) document.getElementById('windDirName').textContent = windDirCardinal;
     if (document.getElementById('windSpeed')) document.getElementById('windSpeed').textContent = windSpeed.split(' ')[0]; // Just number
+    if (document.getElementById('windUnitLabel')) {
+        const wLabel = windSpeed.split(' ').slice(1).join(' '); // Get "km/h", "m/s" etc.
+        document.getElementById('windUnitLabel').textContent = wLabel;
+    }
     if (document.getElementById('windArrow')) {
         document.getElementById('windArrow').style.transform = `translate(-50%, -100%) rotate(${windDegree}deg)`;
     }
@@ -1180,8 +1195,23 @@ function initializeMap(lat, lon) {
 
 // Add legend to map
 function addLegend(layerName) {
-    const data = legendData[layerName];
+    currentActiveLayer = layerName; // Store globally for unit switching
+    const data = JSON.parse(JSON.stringify(legendData[layerName])); // deep copy to modify labels safely
     if (!data) return;
+
+    // Process dynamic labels based on units
+    if (layerName === 'pressure_new') {
+        data.labels = [950, 1013, 1070].map(hPa => formatPressure(hPa));
+    } else if (layerName === 'temp_new') {
+        data.labels = [-40, 0, 40].map(c => formatTemp(c));
+    } else if (layerName === 'wind_new') {
+        // GFS wind tiles are usually in m/s, but our formatWind expects km/h input
+        // Let's adjust labels based on current wind unit
+        if (units.wind === 'ms') data.labels = ['0 m/s', '50 m/s', '100+ m/s'];
+        else if (units.wind === 'mph') data.labels = ['0 mph', '112 mph', '224 mph'];
+        else if (units.wind === 'kn') data.labels = ['0 kn', '97 kn', '194 kn'];
+        else data.labels = ['0 km/h', '180 km/h', '360 km/h'];
+    }
 
     // Remove existing legend
     if (legendControl) {
@@ -1441,6 +1471,59 @@ function detectSevereWeather(data) {
         });
     }
 
+    return alerts;
+}
+
+/**
+ * Detects rain or storms in the next 12 hours from forecast data
+ */
+function detectUpcomingRain(forecastData) {
+    if (!forecastData || !forecastData.list) return [];
+
+    const alerts = [];
+    const now = Math.floor(Date.now() / 1000);
+    // Filter forecast for items in the next 12 hours
+    const nextIntervals = forecastData.list.filter(item => item.dt > now).slice(0, 4);
+
+    for (const item of nextIntervals) {
+        const pop = item.pop || 0;
+        const weather = item.weather[0];
+        const main = weather.main.toLowerCase();
+        const desc = weather.description;
+        const isRain = main.includes('rain') || main.includes('drizzle');
+        const isStorm = main.includes('thunderstorm');
+
+        // Threshold: 30% probability OR explicit rain/storm condition
+        if (pop >= 0.3 || isRain || isStorm) {
+            const date = new Date(item.dt * 1000);
+            const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            let title = 'Chuva a Caminho';
+            let icon = '🌧️';
+            let color = '#60a5fa'; // Cool blue
+
+            if (isStorm) {
+                title = 'Tempestade a Caminho';
+                icon = '⛈️';
+                color = '#f87171'; // Soft red
+            } else if (main.includes('heavy') || desc.includes('forte') || desc.includes('pesada')) {
+                title = 'Chuva Forte a Caminho';
+                color = '#3b82f6'; // Deeper blue
+            } else if (pop > 0.8) {
+                title = 'Chuva Iminente';
+                color = '#4f46e5'; // Indigo-ish for high certainty
+            }
+
+            alerts.push({
+                type: 'upcoming_rain',
+                icon: icon,
+                title: title,
+                message: `Previsto: ${desc.charAt(0).toUpperCase() + desc.slice(1)} por volta de ${time} (${Math.round(pop * 100)}% de chance)`,
+                color: color
+            });
+            break; // Show only the earliest upcoming rain alert
+        }
+    }
     return alerts;
 }
 
