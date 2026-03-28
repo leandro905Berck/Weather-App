@@ -855,7 +855,16 @@ function displayHourlyForecast(items) {
  * Returns an object with icon, name, and illumination percentage
  */
 function updateMoonPhase() {
-    if (!moonIcon || !moonPhaseName || !moonIllumination) return;
+    const wrapper = document.getElementById('moonIconWrapper');
+    if (!moonIcon || !moonPhaseName || !moonIllumination || !wrapper) return;
+
+    // Detect hemisphere (South < 0)
+    const lat = currentResponseData?.coord?.lat || 0;
+    if (lat < 0) {
+        wrapper.classList.add('south');
+    } else {
+        wrapper.classList.remove('south');
+    }
 
     const date = new Date();
     const year = date.getFullYear();
