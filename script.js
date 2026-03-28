@@ -483,7 +483,19 @@ function displayCurrentWeather(data, customLocation = null) {
 
     // Add upcoming rain/storm alerts from forecast
     if (currentChartData) {
-        const upcomingAlerts = detectUpcomingRain(currentChartData);
+        let upcomingAlerts = detectUpcomingRain(currentChartData);
+
+        // Merge rain info if both current and upcoming alerts exist
+        const currentRain = alerts.find(a => a.type === 'rain');
+        const upcomingRain = upcomingAlerts.find(a => a.type === 'upcoming_rain');
+
+        if (currentRain && upcomingRain) {
+            // Append current volume to upcoming alert message
+            upcomingRain.message = `${upcomingRain.message} | ${currentRain.message}`;
+            // Remove the now-redundant current rain alert
+            alerts = alerts.filter(a => a.type !== 'rain');
+        }
+
         alerts = [...alerts, ...upcomingAlerts];
     }
 
@@ -539,6 +551,17 @@ function displayCurrentWeather(data, customLocation = null) {
         document.getElementById('windArrow').style.transform = `translate(-50%, -100%) rotate(${windDegree}deg)`;
     }
 
+    // Wind Gusts
+    const windGust = data.wind?.gust;
+    const windGustRow = document.getElementById('windGustRow');
+    const windGustElem = document.getElementById('windGust');
+    if (windGust && windGustRow && windGustElem) {
+        windGustRow.style.display = 'block';
+        windGustElem.textContent = formatWind(windGust * 3.6);
+    } else if (windGustRow) {
+        windGustRow.style.display = 'none';
+    }
+
     // Pressure Card
     if (document.getElementById('pressure')) document.getElementById('pressure').textContent = pressure.split(' ')[0];
     if (document.getElementById('pressureUnit')) document.getElementById('pressureUnit').textContent = units.pressure === 'hPa' ? 'hPa' : units.pressure;
@@ -556,17 +579,25 @@ function displayCurrentWeather(data, customLocation = null) {
 
         if (document.getElementById('aqiValue')) {
             document.getElementById('aqiValue').textContent = aqi;
-            document.getElementById('aqiValue').style.color = aqiColor;
         }
         if (document.getElementById('aqiLabel')) {
             document.getElementById('aqiLabel').textContent = aqiText;
         }
 
-        // Update gauge with color
+        // Detailed Pollutants
+        const components = currentAqiData.list[0].components;
+        if (components) {
+            if (document.getElementById('pm25')) document.getElementById('pm25').textContent = components.pm2_5.toFixed(1);
+            if (document.getElementById('pm10')) document.getElementById('pm10').textContent = components.pm10.toFixed(1);
+            if (document.getElementById('o3')) document.getElementById('o3').textContent = components.o3.toFixed(1);
+            if (document.getElementById('no2')) document.getElementById('no2').textContent = components.no2.toFixed(1);
+        }
+
+        // Update gauge with color (at bottom)
         updateGauge('aqiGauge', aqi, 5);
-        const aqiGauge = document.getElementById('aqiGauge');
-        if (aqiGauge) {
-            aqiGauge.style.stroke = aqiColor;
+        const aqiGaugePath = document.getElementById('aqiGauge');
+        if (aqiGaugePath) {
+            aqiGaugePath.style.stroke = aqiColor;
         }
     } else {
         // No AQI data available
@@ -578,6 +609,7 @@ function displayCurrentWeather(data, customLocation = null) {
     const cloudiness = data.clouds?.all || 0;
     if (document.getElementById('clouds')) document.getElementById('clouds').textContent = `${cloudiness}%`;
     updateGauge('cloudsGauge', cloudiness, 100);
+
 
     // Initialize or update radar map
     const coords = data.coord || { lat: 0, lon: 0 };
@@ -1411,16 +1443,24 @@ async function onMapClick(e) {
 function detectSevereWeather(data) {
     const alerts = [];
 
-    // Check heavy rain
+    // Check rain
     const rain1h = data.rain?.['1h'] || 0;
     const rain3h = data.rain?.['3h'] || 0;
-    if (rain1h > 20 || rain3h > 50) {
+    if (rain1h > 0 || rain3h > 0) {
+        let title = 'Chuva';
+        let color = '#60a5fa'; // Light blue for normal rain
+        
+        if (rain1h > 10 || rain3h > 30) {
+            title = 'Chuva Forte';
+            color = '#ff8c00'; // Orange for heavy rain
+        }
+        
         alerts.push({
-            type: 'heavy_rain',
+            type: 'rain',
             icon: '🌧️',
-            title: 'Chuva Forte',
-            message: rain1h > 0 ? `${rain1h.toFixed(1)}mm/h` : `${rain3h.toFixed(1)}mm em 3h`,
-            color: '#ff8c00'
+            title: title,
+            message: rain1h > 0 ? `${rain1h.toFixed(1)}mm acumulados` : `${rain3h.toFixed(1)}mm previstos (3h)`,
+            color: color
         });
     }
 
@@ -1751,3 +1791,21 @@ function initDragToScroll(el) {
     el.addEventListener('mousemove', move);
     el.style.cursor = 'grab';
 }
+
+function toggleAqiInfo() {
+    const box = document.getElementById('aqiInfoBox');
+    if (box) {
+        box.classList.toggle('active');
+    }
+}
+
+// Close AQI info box when clicking outside
+window.addEventListener('click', (e) => {
+    const box = document.getElementById('aqiInfoBox');
+    const btn = document.getElementById('aqiInfoBtn');
+    if (box && btn && box.classList.contains('active')) {
+        if (!box.contains(e.target) && !btn.contains(e.target)) {
+            box.classList.remove('active');
+        }
+    }
+});

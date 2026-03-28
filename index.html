@@ -220,6 +220,7 @@
                     </div>
                     <div class="card-content">
                         <div class="main-value" id="windSpeed">7,4</div>
+                        <div class="sub-value" id="windGustRow" style="margin-bottom: 10px; opacity: 0.8; font-size: 0.85em; display: none;">Rajadas: <strong id="windGust">--</strong></div>
                         <div class="gauge-container">
                             <div class="compass">
                                 <div class="compass-label n">N</div>
@@ -277,19 +278,52 @@
 
                 <!-- Air Quality Card -->
                 <section class="dashboard-card detail-card">
-                    <div class="card-header">
+                    <div class="card-header" style="justify-content: space-between; display: flex; align-items: center; position: relative;">
                         <h3 class="card-title">Qualidade do Ar</h3>
+                        <button class="info-btn" id="aqiInfoBtn" title="O que são esses dados?" onclick="toggleAqiInfo()">?</button>
                     </div>
                     <div class="card-content">
+                        <div id="aqiInfoBox" class="info-box-inline">
+                            <p><strong>Unidade:</strong> µg/m³ (microgramas por m³)</p>
+                            <div class="info-details">
+                                <div><strong>PM2.5/10:</strong> Partículas finas e inaláveis.</div>
+                                <div><strong>O3:</strong> Ozônio ao nível do solo.</div>
+                                <div><strong>NO2:</strong> Dióxido de Nitrogênio (emissões).</div>
+                            </div>
+                        </div>
                         <div class="main-value" id="aqiValue">--</div>
                         <div class="sub-value" id="aqiLabel">Carregando...</div>
-                        <div class="gauge-container">
+                        
+                        <div class="gauge-container" style="margin-top: 15px; margin-bottom: 15px;">
                             <svg viewBox="0 0 100 60" class="gauge">
                                 <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" />
                                 <path id="aqiGauge" class="gauge-fill" d="M 10 50 A 40 40 0 0 1 90 50"
                                     stroke-dasharray="0, 1000" />
                             </svg>
                             <div class="gauge-icon">🍃</div>
+                        </div>
+
+                        <div class="pollutants-grid" id="pollutantsGrid">
+                            <div class="pollutant-item">
+                                <span>Partículas Finas</span>
+                                <strong id="pm25">--</strong>
+                                <small>PM2.5</small>
+                            </div>
+                            <div class="pollutant-item">
+                                <span>Part. Inaláveis</span>
+                                <strong id="pm10">--</strong>
+                                <small>PM10</small>
+                            </div>
+                            <div class="pollutant-item">
+                                <span>Ozônio</span>
+                                <strong id="o3">--</strong>
+                                <small>O3</small>
+                            </div>
+                            <div class="pollutant-item">
+                                <span>Dióxido Nitro.</span>
+                                <strong id="no2">--</strong>
+                                <small>NO2</small>
+                            </div>
                         </div>
                     </div>
                 </section>
