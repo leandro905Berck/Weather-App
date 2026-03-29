@@ -41,10 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initMap() {
-    // Start at Pirassununga, SP
-    console.log("Inicializando mapa...");
-    const defaultCenter = [-21.9961, -47.4262];
-    map = L.map('agMap').setView(defaultCenter, 13);
+    // Start highlighting the whole of Brazil
+    console.log("Inicializando mapa do Brasil...");
+    const defaultCenter = [-14.2350, -51.9253];
+    map = L.map('agMap').setView(defaultCenter, 4);
 
     // Map Layers
     const streets = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
