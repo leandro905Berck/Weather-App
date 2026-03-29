@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Agrícola - Weather App BR</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet Geoman -->
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" />
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
+
+    <!-- Leaflet GeometryUtil (Fixed Path) -->
+    <script src="https://unpkg.com/leaflet-geometryutil@0.10.3/src/leaflet.geometryutil.js"></script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="agricola.css">
+</head>
+
+<body>
+    <div class="container ag-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-nav">
+                <a href="index.html" class="btn btn-secondary back-btn">⬅️ Voltar ao Clima</a>
+            </div>
+            <h1>🚜 <span class="header-title">Modo Agrícola</span></h1>
+            <p>Monitoramento de solos e áreas produtivas</p>
+        </header>
+
+        <main class="ag-main-layout full-map-mode">
+            <!-- 1. The Map Container as the Main Canvas -->
+            <div class="ag-map-container full-height-viewport">
+                <div id="agMap"></div>
+
+                <!-- OVERLAY TOP: Settings & Radar/Locate -->
+                <div class="map-overlay overlay-top">
+                    <!-- Unit Selector (Moved here) -->
+                    <div class="glass-card compact-units-panel">
+                        <div class="unit-item">
+                            <span class="unit-label">Área:</span>
+                            <select class="unit-select-compact" id="areaUnitSelect">
+                                <option value="hectare">Hectares (ha)</option>
+                                <option value="paulista">Alqueire (SP)</option>
+                                <option value="mineiro">Alqueire (MG)</option>
+                                <option value="m2">m²</option>
+                            </select>
+                        </div>
+                        <div class="unit-item">
+                            <span class="unit-label">Vento:</span>
+                            <div class="compact-toggle" id="windUnitToggle">
+                                <button class="compact-btn active" data-wind-unit="kmh">km/h</button>
+                                <button class="compact-btn" data-wind-unit="ms">m/s</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Radar, Location & Fullscreen Toggle -->
+                    <div class="overlay-row-controls">
+                        <button class="btn btn-radar-toggle" id="radarToggle">📡 Radar: <b>OFF</b></button>
+                        <button class="btn btn-location-toggle" id="geoLocateBtn" title="Minha Localização">📍 Localizar</button>
+                        <button class="btn btn-fullscreen-toggle" id="fullscreenBtn" title="Tela Cheia">🔲 Tela Cheia</button>
+                    </div>
+                </div>
+
+                <!-- OVERLAY RIGHT: Dashboard Cards (Compact) -->
+                <div class="map-overlay overlay-right scrollable-overlay">
+                    <div class="ag-dashboard-grid-compact">
+                        <!-- Area Summary -->
+                        <div class="dashboard-card detail-card ag-card area-summary-dashboard-compact">
+                            <div class="area-value-display-compact">
+                                <span id="currentAreaSize">0.00</span> 
+                                <small id="currentAreaUnit">ha</small>
+                            </div>
+                            <p id="areaNameLabel" class="area-name-text-compact">Área não selecionada</p>
+                        </div>
+
+                        <!-- Soil Temp -->
+                        <div class="dashboard-card detail-card ag-card-compact">
+                            <div class="card-header-compact"><h3 class="card-title-compact">Solo: Temp</h3></div>
+                            <div class="card-content-compact">
+                                <div class="main-value-compact" id="soilTemp">--°C</div>
+                                <div class="ag-indicator-bar-compact"><div class="bar-fill orange" id="soilTempBar" style="width: 0%"></div></div>
+                            </div>
+                        </div>
+
+                        <!-- Soil Moisture -->
+                        <div class="dashboard-card detail-card ag-card-compact">
+                            <div class="card-header-compact"><h3 class="card-title-compact">Solo: Umid</h3></div>
+                            <div class="card-content-compact">
+                                <div class="main-value-compact" id="soilMoistureSurface">--%</div>
+                                <div class="ag-indicator-bar-compact"><div class="bar-fill blue" id="moistureBar1" style="width: 0%"></div></div>
+                            </div>
+                        </div>
+
+                        <!-- Air Weather -->
+                        <div class="dashboard-card detail-card ag-card-compact">
+                            <div class="card-header-compact"><h3 class="card-title-compact">Ar & Umid</h3></div>
+                            <div class="card-content-compact">
+                                <div class="main-value-compact" id="airTemp">--°C</div>
+                                <div class="sub-value-compact" id="airHumidity">--% Umid.</div>
+                            </div>
+                        </div>
+
+                        <!-- Rain -->
+                        <div class="dashboard-card detail-card ag-card-compact">
+                            <div class="card-header-compact"><h3 class="card-title-compact">Chuva</h3></div>
+                            <div class="card-content-compact">
+                                <div class="main-value-compact" id="currentRain">-- mm</div>
+                                <div class="sub-value-compact" id="rainProbability">--% Prob.</div>
+                            </div>
+                        </div>
+
+                        <!-- Wind -->
+                        <div class="dashboard-card detail-card ag-card-compact wind-card-compact">
+                            <div class="card-content-compact">
+                                <div class="wind-info-compact">
+                                    <span id="windDirName">---</span>
+                                    <span id="windSpeed">--</span>
+                                    <small id="windUnitLabel">km/h</small>
+                                </div>
+                                <div class="compass-compact">
+                                    <div class="compass-arrow-compact" id="windArrow"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OVERLAY LEFT: Meus Talhões (Sidebar Style) -->
+                <div class="map-overlay overlay-left">
+                    <div class="glass-card saved-areas-sidebar">
+                        <h3 class="card-title">Meus Talhões</h3>
+                        <ul class="saved-list-vertical" id="savedAreasList">
+                            <li class="empty-msg">Nenhuma área salva.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- OVERLAY BOTTOM: Previsão de Chuva (Expanded) -->
+                <div class="map-overlay overlay-bottom">
+                    <div class="glass-card forecast-chart-overlay">
+                        <div class="card-header-compact"><h3 class="card-title">Previsão de Chuva (Próximas Horas)</h3></div>
+                        <div class="chart-container-compact">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Centered Hint (Kept for orientation) -->
+                <div class="map-hint" id="mapHint">
+                    <span class="hint-icon">💡</span>
+                    Use o ícone de polígono no mapa para contornar sua plantação
+                </div>
+                <!-- Custom Modal Overlay (Moved inside map container for Fullscreen support) -->
+                <div id="agModal" class="modal-overlay hidden" style="z-index: 9999;">
+                    <div class="modal-content glass-card ag-modal">
+                        <div class="modal-icon" id="agModalIcon">🚜</div>
+                        <h3 id="agModalTitle">Nomear Área</h3>
+                        <div class="modal-input-container" id="agModalInputWrap">
+                            <input type="text" id="agModalInput" placeholder="Digite o nome..." autocomplete="off">
+                        </div>
+                        <div class="modal-buttons">
+                            <button class="btn btn-secondary" id="agModalCancel">Cancelar</button>
+                            <button class="btn" id="agModalConfirm">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Footer Disclaimer -->
+        <footer class="footer ag-footer glass-card">
+            <p>⚠️ <strong>Aviso Importante:</strong> Este app não utiliza servidor. Todas as áreas desenhadas são salvas **apenas na memória local deste dispositivo**. Se você limpar os dados do navegador ou trocar de celular, as áreas serão apagadas.</p>
+            <p>Os dados agrometeorológicos são estimativas via satélite e modelos climáticos. Use como referência complementar.</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="agricola.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1105 @@
+/* Agricola.css - Custom Styles for Agricultural Mode */
+
+.ag-container {
+    max-width: 1400px;
+}
+
+#agMap {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    z-index: 5;
+}
+
+.map-controls-overlay {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.btn-radar-toggle {
+    pointer-events: auto;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.btn-radar-toggle:hover {
+    background: rgba(30, 41, 59, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.btn-radar-toggle.active {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    border-color: #38bdf8;
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+}
+
+.map-hint.static-hint {
+    position: static;
+    transform: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity var(--transition-base);
+}
+
+.ag-modal {
+    width: 90%;
+    max-width: 400px;
+    padding: 30px;
+    text-align: center;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+.ag-modal:hover {
+    transform: none !important;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+#agModalTitle {
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+}
+
+.modal-input-container {
+    margin-bottom: 25px;
+}
+
+#agModalInput {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color var(--transition-base);
+}
+
+#agModalInput:focus {
+    border-color: var(--color-primary);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-buttons .btn {
+    flex: 1;
+}
+
+.ag-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 100;
+}
+
+.header-nav {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: var(--spacing-sm);
+}
+
+.back-btn {
+    font-size: 0.8em;
+    padding: 8px 16px;
+}
+
+/* Setup Row */
+.ag-setup-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.compact-units-panel {
+    display: flex;
+    gap: 30px;
+    padding: 12px 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.unit-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.unit-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.unit-select-compact {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.unit-select-compact:hover {
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.unit-select-compact option {
+    background-color: #1e293b; /* Dark background for the options list */
+    color: #ffffff;            /* White text for the options list */
+}
+
+.compact-toggle {
+    display: flex;
+    background: hsla(0, 0%, 100%, 0.05);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.compact-btn {
+    padding: 4px 10px;
+    border: none;
+    background: none;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: calc(var(--radius-sm) - 2px);
+    transition: all 0.2s;
+}
+
+.compact-btn.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+.toggle-btn {
+    padding: 8px 12px;
+    background: hsla(230, 30%, 20%, 0.6);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all var(--transition-base);
+}
+
+.toggle-btn.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.area-summary-dashboard {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.15));
+    border-color: rgba(59, 130, 246, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 160px;
+}
+
+.area-summary-dashboard .area-value-display {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #f472b6;
+    margin-bottom: 5px;
+    text-shadow: 0 0 15px rgba(244, 114, 182, 0.3);
+}
+
+.area-summary-dashboard .area-name-text {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    opacity: 0.9;
+}
+
+.area-value-display small {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+}
+
+/* Main Grid */
+.ag-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: var(--spacing-lg);
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .ag-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Map Styling */
+.ag-map-section {
+    padding: 0;
+    overflow: hidden;
+    height: 600px;
+}
+
+.ag-map-section .card-header {
+    padding: 15px 20px;
+    background: hsla(0,0%,100%,0.02);
+}
+
+.ag-main-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.ag-dashboard-panel {
+    width: 100%;
+}
+
+.ag-management-row {
+    width: 100%;
+}
+
+.ag-map-container {
+    width: 100%;
+    height: 500px;
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    z-index: 10;
+    box-shadow: var(--shadow-lg);
+}
+
+.ag-map {
+    width: 100%;
+    height: calc(100% - 100px);
+    z-index: 10;
+}
+
+.map-hint {
+    padding: 12px 20px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    background: hsla(0,0%,100%,0.05);
+}
+
+/* Dashboard Panel */
+.ag-data-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.ag-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.ag-card-wide {
+    grid-column: span 3;
+    padding: 20px;
+    min-height: 250px;
+}
+
+.chart-container {
+    width: 100%;
+    height: 180px;
+    margin-top: 10px;
+}
+
+@media (max-width: 480px) {
+    .ag-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ag-card {
+    padding: 15px;
+    min-height: 140px;
+}
+
+.ag-card .main-value {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+}
+
+.ag-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.ag-card-wide {
+    grid-column: 1 / -1;
+}
+
+/* Indicators */
+.ag-indicator-bar {
+    width: 100%;
+    height: 6px;
+    background: hsla(0, 0%, 100%, 0.1);
+    border-radius: 10px;
+    margin-top: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-fill.blue { background: linear-gradient(90deg, #3b82f6, #60a5fa); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+.bar-fill.orange { background: linear-gradient(90deg, #f59e0b, #fbbf24); box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .ag-main-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .ag-map-container, .ag-data-panel {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .ag-map-container {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ag-setup-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .compact-units-panel, .area-summary-card {
+        width: 100%;
+        justify-content: space-around;
+        padding: 15px;
+    }
+
+    .ag-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .container header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Wind Box cleanup - using main style.css for compass */
+.ag-card section.dashboard-card {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* NDVI Section */
+.ndvi-preview {
+    width: 100%;
+    height: 60px;
+    background: hsla(0, 0%, 100%, 0.05);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.ndvi-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-icon {
+    font-size: 1.5rem;
+    opacity: 0.3;
+}
+
+/* Saved Areas List */
+.saved-areas-card {
+    padding: 15px;
+}
+
+.saved-list {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.saved-item {
+    padding: 10px;
+    background: hsla(0,0%,100%,0.03);
+    border: 1px solid hsla(0,0%,100%,0.05);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.saved-item:hover {
+    background: hsla(0,0%,100%,0.08);
+}
+
+.saved-item-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.area-color-picker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.area-color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.area-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+.saved-item-info {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    flex: 1;
+}
+
+.saved-item-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.saved-item-meta {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.delete-area-btn, .edit-area-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.edit-area-btn {
+    color: var(--color-text-muted);
+}
+
+.delete-area-btn {
+    color: var(--color-accent);
+}
+
+.delete-area-btn:hover, .edit-area-btn:hover {
+    opacity: 1;
+}
+
+.empty-msg {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    padding: 20px;
+}
+
+/* Footer Ag */
+.ag-footer {
+    display: none; /* Hide footer in full map mode to save space */
+}
+
+/* ========================================= */
+/* MAP-CENTRIC LAYOUT OVERLAYS & COMPACT UI  */
+/* ========================================= */
+
+.ag-main-layout.full-map-mode {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    position: relative;
+    display: block;
+}
+
+.ag-map-container.full-height-viewport {
+    height: calc(100vh - 120px);
+    height: 100dvh; /* Maximize on mobile */
+    min-height: 600px;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 0;
+    border-radius: 0; /* Remove borders for edge-to-edge feel */
+}
+
+#agMap {
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+}
+
+/* OVERLAYS SYSTEM */
+.map-overlay {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.map-overlay > * {
+    pointer-events: auto;
+}
+
+/* Top Overlay (Controls & Units) */
+.overlay-top {
+    top: 15px;
+    left: 60px; /* Afastado para não cobrir o topo da barra do Geoman */
+    right: 70px; /* Afastado da ponta para não cobrir o botão de satélite/mapa (Leaflet Layer Control) */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.compact-units-panel {
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    padding: 10px 15px !important;
+    border-radius: 12px !important;
+    margin-bottom: 0 !important;
+    border: 1px solid hsla(0,0%,100%,0.1) !important;
+}
+
+.overlay-row-controls {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.btn-radar-toggle, .btn-location-toggle, .btn-fullscreen-toggle {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-radar-toggle:hover, .btn-location-toggle:hover, .btn-fullscreen-toggle:hover {
+    background: rgba(30, 41, 59, 1);
+    transform: translateY(-2px);
+}
+
+.btn-radar-toggle.active {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    border-color: #38bdf8;
+}
+
+/* Left Overlay (Saved Areas - Moved here to dodge Geoman) */
+.overlay-left {
+    top: 360px; /* Mais para baixo para escapar totalmente das ferramentas de polígono */
+    left: 15px; /* Colado na esquerda novamente */
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.scrollable-overlay {
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.scrollable-overlay::-webkit-scrollbar {
+    width: 4px;
+}
+
+.scrollable-overlay::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+.ag-dashboard-grid-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 20px;
+}
+
+/* Compact Cards */
+.ag-card-compact, .area-summary-dashboard-compact, .wind-card-compact {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsla(0,0%,100%,0.1);
+    border-radius: 12px;
+    padding: 12px 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.area-summary-dashboard-compact {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(147, 51, 234, 0.6));
+    border-color: rgba(59, 130, 246, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.area-value-display-compact {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.area-value-display-compact small {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.area-name-text-compact {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+    margin-top: 4px;
+}
+
+.card-header-compact {
+    margin-bottom: 5px;
+}
+
+.card-title-compact {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.card-content-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.main-value-compact {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.sub-value-compact {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.6);
+}
+
+.ag-indicator-bar-compact {
+    width: 60px;
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.wind-card-compact .card-content-compact {
+    align-items: center;
+}
+
+.wind-info-compact {
+    display: flex;
+    flex-direction: column;
+}
+
+.compass-compact {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Adicionando um pivô visual central na bússola */
+}
+.compass-compact::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.compass-arrow-compact {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: transform 0.5s ease-out;
+    transform-origin: center center;
+    z-index: 2;
+}
+
+.compass-arrow-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: calc(50% - 5px); /* Centraliza o triângulo (metade do border-left/right) */
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 12px solid #3b82f6; 
+}
+
+/* Right Overlay (Dashboard Cards) */
+.overlay-right {
+    top: 80px;
+    right: 15px;
+    bottom: 120px;
+    width: 250px;
+}
+
+/* Constrain PC left overlay to map bottom */
+@media (min-width: 801px) {
+    .overlay-left {
+        top: 380px; /* Move para baixo de todos os botões do Geoman (aprox 350px de altura) */
+        bottom: 25px; /* Trava o container à base do mapa */
+        height: auto;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.saved-areas-sidebar {
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid hsla(0,0%,100%,0.1) !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+    margin-bottom: 0 !important;
+    
+    /* Configuração Flex para ancorar rolagem com precisão */
+    display: flex;
+    flex-direction: column;
+    max-height: 100%; /* Respeita a altura limitadora da overlay parente */
+}
+
+/* Header Shrink protection */
+.saved-areas-sidebar h3 {
+    flex-shrink: 0;
+}
+
+.saved-list-vertical {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1; /* Pega o resto de espaço que sobrar do .saved-areas-sidebar */
+    overflow-y: auto; /* Apenas as LISTAS estouram espaço, ativando slider */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+.saved-list-vertical li {
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.saved-list-vertical li:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Bottom Overlay (Chart) */
+.overlay-bottom {
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    max-width: calc(100% - 30px);
+}
+
+.forecast-chart-overlay {
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid hsla(0,0%,100%,0.1) !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+.chart-container-compact {
+    height: 100px;
+    width: 100%;
+}
+
+.map-hint {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 10px 25px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    border: 1px solid hsla(0, 0%, 100%, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    white-space: nowrap;
+    z-index: 1001;
+}
+
+.map-hint.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -20px);
+}
+
+/* MOBILE RESPONSIVENESS (Crucial) */
+@media (max-width: 800px) {
+    /* Top: Recuado para não cobrir Geoman e Layers */
+    .overlay-top {
+        top: 10px;
+        left: 55px; /* Aumentado para garantir folga do geoman */
+        right: 55px;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .compact-units-panel {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap; /* Permitir quebra se a tela for muito estreita */
+        justify-content: center;
+        gap: 8px; /* Aumentado milimetricamente para o wrap ficar bonito */
+        padding: 8px 10px;
+        font-size: 0.70rem;
+        width: 100%; /* Preencher a área delimitada de forma elegante */
+    }
+
+    .compact-units-panel select {
+        font-size: 0.70rem;
+        padding: 2px 15px 2px 5px;
+    }
+
+    .overlay-row-controls {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .btn-radar-toggle, .btn-location-toggle, .btn-fullscreen-toggle {
+        font-size: 0.65rem;
+        padding: 6px 8px;
+        white-space: nowrap;
+    }
+
+    /* Left Overlay (Meus Talhões): Empilhado no fundo */
+    .overlay-left {
+        top: auto;
+        bottom: 250px; /* Aumentado drasticamente para evitar qualquer colisão com os cards */
+        left: 5px;
+        right: 5px;
+        width: auto;
+        display: block;
+    }
+
+    .saved-areas-sidebar {
+        padding: 5px 8px !important;
+        max-height: none;
+    }
+    
+    .saved-areas-sidebar h3 {
+        margin-bottom: 3px;
+        font-size: 0.7rem;
+    }
+
+    .saved-list-vertical {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 8px;
+        margin: 0;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .saved-list-vertical li {
+        min-width: 130px;
+        flex-shrink: 0;
+        margin-bottom: 0;
+        padding: 5px 8px;
+    }
+
+    .saved-list-vertical li span { font-size: 0.8rem; }
+    .saved-list-vertical li small { font-size: 0.65rem; }
+
+    /* Right Overlay (Dashboard): Micro cards roláveis */
+    .overlay-right {
+        top: auto;
+        bottom: 105px; /* Bem perto do gráfico da chuva */
+        left: 5px;
+        right: 5px;
+        width: auto;
+    }
+
+    .ag-dashboard-grid-compact {
+        flex-direction: row;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .ag-card-compact, .area-summary-dashboard-compact, .wind-card-compact {
+        min-width: 120px;
+        flex-shrink: 0;
+        padding: 8px;
+    }
+
+    .area-value-display-compact { font-size: 1.1rem; }
+    .main-value-compact { font-size: 1rem; }
+    .card-title-compact { font-size: 0.65rem; }
+    .sub-value-compact { font-size: 0.65rem; }
+    .compass-compact { width: 26px; height: 26px; }
+
+    /* Bottom Overlay (Chart): Gráfico de Chuva achatado */
+    .overlay-bottom {
+        bottom: 5px;
+        left: 5%;
+        width: 90%;
+        max-width: none;
+        transform: none !important; /* Corrige o erro de corte! */
+    }
+    
+    .chart-container-compact {
+        height: 60px; /* Super espremido pra poupar tela */
+    }
+
+    .forecast-chart-overlay {
+        padding: 5px 8px !important;
+    }
+
+    /* Dica reduzida */
+    .map-hint {
+        top: 120px; 
+        padding: 6px 12px;
+        font-size: 0.70rem;
+    }
+}

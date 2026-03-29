@@ -213,6 +213,7 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
+  text-decoration: none;
 }
 
 .btn-secondary {
