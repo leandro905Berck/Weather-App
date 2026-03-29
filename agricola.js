@@ -885,6 +885,12 @@ function showCustomModal({ title, icon, type = 'alert', placeholder = '', defaul
         const btnCancel = document.getElementById('agModalCancel');
         const btnConfirm = document.getElementById('agModalConfirm');
 
+        // Previne que o Leaflet 'engula' toques no mobile pois o modal está dentro do container do mapa
+        if (typeof L !== 'undefined' && L.DomEvent) {
+            L.DomEvent.disableClickPropagation(modal);
+            L.DomEvent.disableScrollPropagation(modal);
+        }
+
         titleEl.textContent = title;
         iconEl.textContent = icon || 'ℹ️';
         input.value = defaultValue;
