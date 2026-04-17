@@ -423,6 +423,9 @@ async function fetchWeatherByCoords(lat, lon, locationName = null) {
         hideLoading();
         hideError();
 
+        // Trigger AI weather analysis (non-blocking)
+        analyzeWeatherWithAI(currentData, forecastData, currentAqiData);
+
     } catch (error) {
         hideLoading();
         showError(error.message);
@@ -1807,5 +1810,275 @@ window.addEventListener('click', (e) => {
         if (!box.contains(e.target) && !btn.contains(e.target)) {
             box.classList.remove('active');
         }
+    }
+});
+
+// ============================================================
+// AI WEATHER ANALYSIS — Google Gemini Integration
+// ============================================================
+// A chave é obtida do config.js (ignorada pelo git por segurança)
+const GEMINI_API_KEY = window.APP_CONFIG?.GEMINI_API_KEY || '';
+const GEMINI_MODEL   = 'gemini-3-flash-preview';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+/**
+ * Builds a rich Portuguese-language prompt with all available weather data.
+ */
+function buildWeatherPrompt(currentData, forecastData, aqiData) {
+    const now = new Date();
+    const weekdays = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    const months   = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const dateStr  = `${weekdays[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+    const timeStr  = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    // Season detection (Southern Hemisphere aware)
+    const month = now.getMonth() + 1;
+    const lat   = currentData.coord?.lat || 0;
+    let season;
+    if (lat < 0) {
+        if ([12, 1, 2].includes(month))  season = 'Verão';
+        else if ([3, 4, 5].includes(month))  season = 'Outono';
+        else if ([6, 7, 8].includes(month))  season = 'Inverno';
+        else season = 'Primavera';
+    } else {
+        if ([12, 1, 2].includes(month))  season = 'Inverno';
+        else if ([3, 4, 5].includes(month))  season = 'Primavera';
+        else if ([6, 7, 8].includes(month))  season = 'Verão';
+        else season = 'Outono';
+    }
+
+    const city        = currentData.name || 'Desconhecida';
+    const country     = currentData.sys?.country || '';
+    const tempC       = Math.round(currentData.main?.temp || 0);
+    const feelsLike   = Math.round(currentData.main?.feels_like || 0);
+    const humidity    = currentData.main?.humidity || 0;
+    const pressure    = currentData.main?.pressure || 0;
+    const cloudiness  = currentData.clouds?.all || 0;
+    const description = (currentData.weather?.[0]?.description || 'sem dados')
+                        .replace(/^./, c => c.toUpperCase());
+    const windKmh     = Math.round((currentData.wind?.speed || 0) * 3.6);
+    const windGust    = currentData.wind?.gust ? Math.round(currentData.wind.gust * 3.6) : null;
+    const windDirStr  = getWindDirection(currentData.wind?.deg || 0);
+    const uvVal       = currentData.uvi !== undefined ? Math.round(currentData.uvi) : null;
+
+    let uvRisk = 'baixo';
+    if (uvVal !== null) {
+        if (uvVal >= 11) uvRisk = 'extremo';
+        else if (uvVal >= 8) uvRisk = 'muito alto';
+        else if (uvVal >= 6) uvRisk = 'alto';
+        else if (uvVal >= 3) uvRisk = 'moderado';
+    }
+
+    const sunrise = currentData.sys?.sunrise
+        ? new Date(currentData.sys.sunrise * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        : '--';
+    const sunset = currentData.sys?.sunset
+        ? new Date(currentData.sys.sunset * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        : '--';
+
+    // AQI block
+    let aqiBlock = 'Indisponível';
+    if (aqiData?.list?.[0]) {
+        const aqi  = aqiData.list[0].main.aqi;
+        const labs = ['Boa', 'Moderada', 'Ruim', 'Muito Ruim', 'Péssima'];
+        const comp = aqiData.list[0].components;
+        aqiBlock = `${aqi} - ${labs[aqi - 1] || '?'} | PM2.5: ${comp.pm2_5?.toFixed(1)} | PM10: ${comp.pm10?.toFixed(1)} | O3: ${comp.o3?.toFixed(1)} | NO2: ${comp.no2?.toFixed(1)}`;
+    }
+
+    // 5-day daily summary from forecast
+    const dailySummary = {};
+    if (forecastData?.list) {
+        forecastData.list.forEach(item => {
+            const d   = new Date(item.dt * 1000);
+            const key = `${weekdays[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
+            if (!dailySummary[key]) {
+                dailySummary[key] = {
+                    min: item.main.temp_min,
+                    max: item.main.temp_max,
+                    desc: item.weather[0].description,
+                    pop: 0
+                };
+            }
+            dailySummary[key].min  = Math.min(dailySummary[key].min, item.main.temp_min);
+            dailySummary[key].max  = Math.max(dailySummary[key].max, item.main.temp_max);
+            dailySummary[key].pop  = Math.max(dailySummary[key].pop, item.pop || 0);
+        });
+    }
+    const forecastLines = Object.entries(dailySummary)
+        .slice(0, 5)
+        .map(([day, d]) => `  [${day}] Máx ${Math.round(d.max)}°C / Mín ${Math.round(d.min)}°C — ${d.desc} (chuva: ${Math.round(d.pop * 100)}%)`)
+        .join('\n');
+
+    return `Você é um assistente meteorológico simpático, especialista e contextual para brasileiros.
+Analise os dados climáticos abaixo e gere insights úteis, dinâmicos e práticos em português do Brasil.
+Seja específico, use os números reais e dê dicas acionáveis. Varie o tom: pode ser animado, alarmante ou tranquilizador conforme o clima.
+
+DADOS DO CLIMA:
+- Local: ${city}, ${country} (Lat: ${currentData.coord?.lat?.toFixed(2)}, Lon: ${currentData.coord?.lon?.toFixed(2)})
+- Data/Hora: ${dateStr} às ${timeStr} | Estação: ${season}
+- Temperatura: ${tempC}°C (sensação ${feelsLike}°C)
+- Condição: ${description}
+- Umidade: ${humidity}% | Pressão: ${pressure} hPa | Nebulosidade: ${cloudiness}%
+- Vento: ${windKmh} km/h de ${windDirStr}${windGust ? ` | Rajadas: ${windGust} km/h` : ''}
+${uvVal !== null ? `- Índice UV: ${uvVal} (${uvRisk})` : ''}
+- Qualidade do Ar: ${aqiBlock}
+- Nascer do sol: ${sunrise} | Pôr do sol: ${sunset}
+- Previsão próximos dias:
+${forecastLines || '  Indisponível'}
+
+RETORNE APENAS um JSON válido, sem markdown, sem texto extra, no formato:
+{"insights":[{"icon":"emoji","category":"Resumo|Alerta|Saúde|Dica|Semana|Atividade","title":"max 35 chars","message":"max 80 chars"}]}
+
+Gere EXATAMENTE 3 insights (não mais). Seja conciso. Priorize: resumo do dia, alerta mais importante, dica prática.`;
+}
+
+/**
+ * Calls the Gemini REST API using x-goog-api-key header (required for AQ. keys).
+ */
+async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
+    const card         = document.getElementById('aiWeatherCard');
+    const loadingEl    = document.getElementById('aiLoadingState');
+    const insightsGrid = document.getElementById('aiInsightsGrid');
+    const errorState   = document.getElementById('aiErrorState');
+    const errorTextEl  = document.getElementById('aiErrorText');
+
+    if (!card) return;
+
+    // Show card + loading
+    card.style.display         = 'block';
+    loadingEl.style.display    = 'flex';
+    insightsGrid.style.display = 'none';
+    errorState.style.display   = 'none';
+    insightsGrid.innerHTML     = '';
+
+    try {
+        const prompt = buildWeatherPrompt(currentData, forecastData, aqiData);
+
+        const response = await fetch(GEMINI_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': GEMINI_API_KEY
+            },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.75,
+                    maxOutputTokens: 2048   // espaço suficiente para o JSON completo
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData?.error?.message || `Erro HTTP ${response.status}`);
+        }
+
+        const data    = await response.json();
+        console.log('[AI Weather] Full response:', JSON.stringify(data, null, 2));
+
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        console.log('[AI Weather] Raw text:', rawText);
+        console.log('[AI Weather] Finish reason:', data?.candidates?.[0]?.finishReason);
+
+        if (!rawText) {
+            const reason = data?.candidates?.[0]?.finishReason || 'sem conteúdo';
+            throw new Error(`IA não retornou texto. Motivo: ${reason}`);
+        }
+
+        // Multiple JSON extraction strategies
+        let parsed = null;
+
+        // Strategy 1: extract first {...} block
+        const blockMatch = rawText.match(/\{[\s\S]*\}/);
+        if (blockMatch) {
+            try { parsed = JSON.parse(blockMatch[0]); } catch(e) { /* try next */ }
+        }
+
+        // Strategy 2: strip ```json fences then parse
+        if (!parsed) {
+            const fenced = rawText.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+            try { parsed = JSON.parse(fenced); } catch(e) { /* try next */ }
+        }
+
+        // Strategy 3: direct parse
+        if (!parsed) {
+            try { parsed = JSON.parse(rawText.trim()); } catch(e) { /* all failed */ }
+        }
+
+        if (!parsed) {
+            throw new Error(`Não foi possível extrair JSON. Resposta bruta: ${rawText.slice(0, 200)}`);
+        }
+
+        if (!parsed.insights || !Array.isArray(parsed.insights) || !parsed.insights.length) {
+            throw new Error('Resposta inesperada da IA.');
+        }
+
+        renderAIInsights(parsed.insights);
+
+    } catch (err) {
+        console.error('[AI Weather]', err);
+        loadingEl.style.display  = 'none';
+        errorState.style.display = 'flex';
+        if (errorTextEl) errorTextEl.textContent = `Não foi possível gerar a análise: ${err.message}`;
+    }
+}
+
+/**
+ * Renders insight cards with staggered fade-in animation.
+ */
+function renderAIInsights(insights) {
+    const loadingEl = document.getElementById('aiLoadingState');
+    const grid      = document.getElementById('aiInsightsGrid');
+    if (!grid) return;
+
+    loadingEl.style.display = 'none';
+    grid.innerHTML = '';
+
+    const categoryClass = {
+        'resumo':    'ai-cat-resumo',
+        'alerta':    'ai-cat-alerta',
+        'saude':     'ai-cat-saude',
+        'saúde':     'ai-cat-saude',
+        'dica':      'ai-cat-dica',
+        'semana':    'ai-cat-semana',
+        'atividade': 'ai-cat-atividade'
+    };
+
+    insights.forEach((insight, i) => {
+        // Normalize accent for lookup
+        const catKey   = (insight.category || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+        const catClass = categoryClass[catKey] || 'ai-cat-dica';
+
+        const item = document.createElement('div');
+        item.className = 'ai-insight-item';
+        item.style.animationDelay = `${i * 0.09}s`;
+        item.innerHTML = `
+            <span class="ai-insight-icon">${insight.icon || '💡'}</span>
+            <div class="ai-insight-body">
+                <span class="ai-insight-category ${catClass}">${insight.category || 'Info'}</span>
+                <span class="ai-insight-title">${insight.title || ''}</span>
+                <span class="ai-insight-message">${insight.message || ''}</span>
+            </div>
+        `;
+        grid.appendChild(item);
+    });
+
+    grid.style.display = 'grid';
+}
+
+// Wire up the refresh button (runs after DOM is ready)
+document.addEventListener('DOMContentLoaded', () => {
+    const refreshBtn = document.getElementById('aiRefreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            if (!currentResponseData) return;
+            refreshBtn.classList.add('spinning');
+            analyzeWeatherWithAI(currentResponseData, currentChartData, currentAqiData)
+                .finally(() => refreshBtn.classList.remove('spinning'));
+        });
     }
 });
