@@ -1818,7 +1818,7 @@ window.addEventListener('click', (e) => {
 // ============================================================
 // A chave é obtida do config.js (ignorada pelo git por segurança)
 const GEMINI_API_KEY = window.APP_CONFIG?.GEMINI_API_KEY || '';
-const GEMINI_MODEL   = 'gemini-3-flash-preview';
+const GEMINI_MODEL   = 'gemma-3-27b-it';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
