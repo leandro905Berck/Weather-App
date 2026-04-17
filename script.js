@@ -1452,12 +1452,12 @@ function detectSevereWeather(data) {
     if (rain1h > 0 || rain3h > 0) {
         let title = 'Chuva';
         let color = '#60a5fa'; // Light blue for normal rain
-        
+
         if (rain1h > 10 || rain3h > 30) {
             title = 'Chuva Forte';
             color = '#ff8c00'; // Orange for heavy rain
         }
-        
+
         alerts.push({
             type: 'rain',
             icon: '🌧️',
@@ -1818,7 +1818,7 @@ window.addEventListener('click', (e) => {
 // ============================================================
 // A chave é obtida do config.js (ignorada pelo git por segurança)
 const GEMINI_API_KEY = window.APP_CONFIG?.GEMINI_API_KEY || '';
-const GEMINI_MODEL   = 'gemma-3-27b-it';
+const GEMINI_MODEL = 'gemma-3-27b-it';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
@@ -1826,40 +1826,40 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
  */
 function buildWeatherPrompt(currentData, forecastData, aqiData) {
     const now = new Date();
-    const weekdays = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-    const months   = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    const dateStr  = `${weekdays[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
-    const timeStr  = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    const dateStr = `${weekdays[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+    const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     // Season detection (Southern Hemisphere aware)
     const month = now.getMonth() + 1;
-    const lat   = currentData.coord?.lat || 0;
+    const lat = currentData.coord?.lat || 0;
     let season;
     if (lat < 0) {
-        if ([12, 1, 2].includes(month))  season = 'Verão';
-        else if ([3, 4, 5].includes(month))  season = 'Outono';
-        else if ([6, 7, 8].includes(month))  season = 'Inverno';
+        if ([12, 1, 2].includes(month)) season = 'Verão';
+        else if ([3, 4, 5].includes(month)) season = 'Outono';
+        else if ([6, 7, 8].includes(month)) season = 'Inverno';
         else season = 'Primavera';
     } else {
-        if ([12, 1, 2].includes(month))  season = 'Inverno';
-        else if ([3, 4, 5].includes(month))  season = 'Primavera';
-        else if ([6, 7, 8].includes(month))  season = 'Verão';
+        if ([12, 1, 2].includes(month)) season = 'Inverno';
+        else if ([3, 4, 5].includes(month)) season = 'Primavera';
+        else if ([6, 7, 8].includes(month)) season = 'Verão';
         else season = 'Outono';
     }
 
-    const city        = currentData.name || 'Desconhecida';
-    const country     = currentData.sys?.country || '';
-    const tempC       = Math.round(currentData.main?.temp || 0);
-    const feelsLike   = Math.round(currentData.main?.feels_like || 0);
-    const humidity    = currentData.main?.humidity || 0;
-    const pressure    = currentData.main?.pressure || 0;
-    const cloudiness  = currentData.clouds?.all || 0;
+    const city = currentData.name || 'Desconhecida';
+    const country = currentData.sys?.country || '';
+    const tempC = Math.round(currentData.main?.temp || 0);
+    const feelsLike = Math.round(currentData.main?.feels_like || 0);
+    const humidity = currentData.main?.humidity || 0;
+    const pressure = currentData.main?.pressure || 0;
+    const cloudiness = currentData.clouds?.all || 0;
     const description = (currentData.weather?.[0]?.description || 'sem dados')
-                        .replace(/^./, c => c.toUpperCase());
-    const windKmh     = Math.round((currentData.wind?.speed || 0) * 3.6);
-    const windGust    = currentData.wind?.gust ? Math.round(currentData.wind.gust * 3.6) : null;
-    const windDirStr  = getWindDirection(currentData.wind?.deg || 0);
-    const uvVal       = currentData.uvi !== undefined ? Math.round(currentData.uvi) : null;
+        .replace(/^./, c => c.toUpperCase());
+    const windKmh = Math.round((currentData.wind?.speed || 0) * 3.6);
+    const windGust = currentData.wind?.gust ? Math.round(currentData.wind.gust * 3.6) : null;
+    const windDirStr = getWindDirection(currentData.wind?.deg || 0);
+    const uvVal = currentData.uvi !== undefined ? Math.round(currentData.uvi) : null;
 
     let uvRisk = 'baixo';
     if (uvVal !== null) {
@@ -1879,7 +1879,7 @@ function buildWeatherPrompt(currentData, forecastData, aqiData) {
     // AQI block
     let aqiBlock = 'Indisponível';
     if (aqiData?.list?.[0]) {
-        const aqi  = aqiData.list[0].main.aqi;
+        const aqi = aqiData.list[0].main.aqi;
         const labs = ['Boa', 'Moderada', 'Ruim', 'Muito Ruim', 'Péssima'];
         const comp = aqiData.list[0].components;
         aqiBlock = `${aqi} - ${labs[aqi - 1] || '?'} | PM2.5: ${comp.pm2_5?.toFixed(1)} | PM10: ${comp.pm10?.toFixed(1)} | O3: ${comp.o3?.toFixed(1)} | NO2: ${comp.no2?.toFixed(1)}`;
@@ -1889,7 +1889,7 @@ function buildWeatherPrompt(currentData, forecastData, aqiData) {
     const dailySummary = {};
     if (forecastData?.list) {
         forecastData.list.forEach(item => {
-            const d   = new Date(item.dt * 1000);
+            const d = new Date(item.dt * 1000);
             const key = `${weekdays[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
             if (!dailySummary[key]) {
                 dailySummary[key] = {
@@ -1899,9 +1899,9 @@ function buildWeatherPrompt(currentData, forecastData, aqiData) {
                     pop: 0
                 };
             }
-            dailySummary[key].min  = Math.min(dailySummary[key].min, item.main.temp_min);
-            dailySummary[key].max  = Math.max(dailySummary[key].max, item.main.temp_max);
-            dailySummary[key].pop  = Math.max(dailySummary[key].pop, item.pop || 0);
+            dailySummary[key].min = Math.min(dailySummary[key].min, item.main.temp_min);
+            dailySummary[key].max = Math.max(dailySummary[key].max, item.main.temp_max);
+            dailySummary[key].pop = Math.max(dailySummary[key].pop, item.pop || 0);
         });
     }
     const forecastLines = Object.entries(dailySummary)
@@ -1936,20 +1936,20 @@ Gere EXATAMENTE 3 insights (não mais). Seja conciso. Priorize: resumo do dia, a
  * Calls the Gemini REST API using x-goog-api-key header (required for AQ. keys).
  */
 async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
-    const card         = document.getElementById('aiWeatherCard');
-    const loadingEl    = document.getElementById('aiLoadingState');
+    const card = document.getElementById('aiWeatherCard');
+    const loadingEl = document.getElementById('aiLoadingState');
     const insightsGrid = document.getElementById('aiInsightsGrid');
-    const errorState   = document.getElementById('aiErrorState');
-    const errorTextEl  = document.getElementById('aiErrorText');
+    const errorState = document.getElementById('aiErrorState');
+    const errorTextEl = document.getElementById('aiErrorText');
 
     if (!card) return;
 
     // Show card + loading
-    card.style.display         = 'block';
-    loadingEl.style.display    = 'flex';
+    card.style.display = 'block';
+    loadingEl.style.display = 'flex';
     insightsGrid.style.display = 'none';
-    errorState.style.display   = 'none';
-    insightsGrid.innerHTML     = '';
+    errorState.style.display = 'none';
+    insightsGrid.innerHTML = '';
 
     try {
         const prompt = buildWeatherPrompt(currentData, forecastData, aqiData);
@@ -1971,10 +1971,30 @@ async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
-            throw new Error(errData?.error?.message || `Erro HTTP ${response.status}`);
+            const status = response.status;
+            const msg = errData?.error?.message || '';
+
+            if (status === 429) {
+                // Tenta extrair tempo de espera da mensagem (ex: "Please try again in 3s")
+                const timeMatch = msg.match(/try again in ([0-9]+[a-z]+)/i);
+                const waitTime = timeMatch ? timeMatch[1] : null;
+
+                let friendlyMsg = "Muitas pessoas estão utilizando nossa IA no momento. ";
+
+                if (waitTime) {
+                    friendlyMsg += `Por favor, aguarde ${waitTime} e tente novamente.`;
+                } else if (msg.toLowerCase().includes('daily')) {
+                    friendlyMsg += "O limite diário foi atingido. Por favor, tente novamente amanhã.";
+                } else {
+                    friendlyMsg += "Por favor, aguarde alguns instantes e tente novamente.";
+                }
+                throw new Error(friendlyMsg);
+            }
+
+            throw new Error(msg || `Erro HTTP ${status}`);
         }
 
-        const data    = await response.json();
+        const data = await response.json();
         console.log('[AI Weather] Full response:', JSON.stringify(data, null, 2));
 
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1992,18 +2012,18 @@ async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
         // Strategy 1: extract first {...} block
         const blockMatch = rawText.match(/\{[\s\S]*\}/);
         if (blockMatch) {
-            try { parsed = JSON.parse(blockMatch[0]); } catch(e) { /* try next */ }
+            try { parsed = JSON.parse(blockMatch[0]); } catch (e) { /* try next */ }
         }
 
         // Strategy 2: strip ```json fences then parse
         if (!parsed) {
             const fenced = rawText.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-            try { parsed = JSON.parse(fenced); } catch(e) { /* try next */ }
+            try { parsed = JSON.parse(fenced); } catch (e) { /* try next */ }
         }
 
         // Strategy 3: direct parse
         if (!parsed) {
-            try { parsed = JSON.parse(rawText.trim()); } catch(e) { /* all failed */ }
+            try { parsed = JSON.parse(rawText.trim()); } catch (e) { /* all failed */ }
         }
 
         if (!parsed) {
@@ -2018,7 +2038,7 @@ async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
 
     } catch (err) {
         console.error('[AI Weather]', err);
-        loadingEl.style.display  = 'none';
+        loadingEl.style.display = 'none';
         errorState.style.display = 'flex';
         if (errorTextEl) errorTextEl.textContent = `Não foi possível gerar a análise: ${err.message}`;
     }
@@ -2029,25 +2049,25 @@ async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
  */
 function renderAIInsights(insights) {
     const loadingEl = document.getElementById('aiLoadingState');
-    const grid      = document.getElementById('aiInsightsGrid');
+    const grid = document.getElementById('aiInsightsGrid');
     if (!grid) return;
 
     loadingEl.style.display = 'none';
     grid.innerHTML = '';
 
     const categoryClass = {
-        'resumo':    'ai-cat-resumo',
-        'alerta':    'ai-cat-alerta',
-        'saude':     'ai-cat-saude',
-        'saúde':     'ai-cat-saude',
-        'dica':      'ai-cat-dica',
-        'semana':    'ai-cat-semana',
+        'resumo': 'ai-cat-resumo',
+        'alerta': 'ai-cat-alerta',
+        'saude': 'ai-cat-saude',
+        'saúde': 'ai-cat-saude',
+        'dica': 'ai-cat-dica',
+        'semana': 'ai-cat-semana',
         'atividade': 'ai-cat-atividade'
     };
 
     insights.forEach((insight, i) => {
         // Normalize accent for lookup
-        const catKey   = (insight.category || '')
+        const catKey = (insight.category || '')
             .toLowerCase()
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '');
