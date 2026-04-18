@@ -41,8 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initMap() {
-    // Start highlighting the whole of Brazil
-    console.log("Inicializando mapa do Brasil...");
     const defaultCenter = [-14.2350, -51.9253];
     map = L.map('agMap').setView(defaultCenter, 4);
 
@@ -65,7 +63,6 @@ function initMap() {
     };
     L.control.layers(baseMaps).addTo(map);
 
-    console.log("Controles Geoman sendo adicionados...");
     map.pm.addControls({
         position: 'topleft',
         drawMarker: false,
@@ -82,7 +79,6 @@ function initMap() {
 
     // Event: When a polygon is finished
     map.on('pm:create', (e) => {
-        console.log("Layer Geoman criado:", e);
         const layer = e.layer;
         const geojson = layer.toGeoJSON();
         const index = savedAreas.length;
@@ -131,9 +127,7 @@ function initFullscreenToggle() {
             // Apply fullscreen directly to the map container, bypassing generic page max-widths
             const mapContainer = document.querySelector('.ag-map-container');
             if(mapContainer) {
-                mapContainer.requestFullscreen().catch(err => {
-                    console.error(`Erro ao ativar tela cheia: ${err.message}`);
-                });
+                mapContainer.requestFullscreen().catch(err => {});
             }
             btn.innerHTML = '🔲 Sair da Tela Cheia';
         } else {
@@ -222,7 +216,6 @@ function initGeoLocation() {
                 }).addTo(map).bindPopup("Você está aqui").openPopup();
             },
             (error) => {
-                console.error("Erro ao localizar:", error);
                 alert("Não foi possível obter sua localização. Verifique as permissões.");
                 btn.innerHTML = '📍 Localizar';
             }
@@ -318,13 +311,11 @@ function updateAreaDisplay(m2 = null) {
 }
 
 async function processNewPolygon(geojson, layer, index) {
-    console.log("Processando novo polígono...");
     let latlngs = layer.getLatLngs();
     if(Array.isArray(latlngs[0])) latlngs = latlngs[0]; 
     
     let areaM2 = calculateAreaManual(latlngs);
     
-    console.log("Área calculada (m2):", areaM2);
     updateAreaDisplay(areaM2);
     
     const name = await showCustomModal({
@@ -364,7 +355,6 @@ async function processNewPolygon(geojson, layer, index) {
             fetchAgData(polyData.id);
         }
     } catch (err) {
-        console.error("Erro ao registrar área na API:", err);
         alert("Erro ao conectar com a API Agrícola.");
         layer.remove();
     }
@@ -404,7 +394,6 @@ async function fetchAgData(polyId) {
         if (results[2].status === 'fulfilled') updateForecastUI(results[2].value);
 
     } catch (err) {
-        console.error("Erro ao buscar dados agrícolas:", err);
     } finally {
         hideLoading();
     }
@@ -522,7 +511,6 @@ function updateAccumulatedRainUI(data) {
 }
 
 function updateGDDUI(data) {
-    console.log("GDD Data received:", data);
     if (!data || data.message || typeof data.temperature === 'undefined') {
         document.getElementById('accGDD').textContent = "0";
         return;
@@ -739,7 +727,7 @@ async function renameArea(index, e) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName, geo_json: area.geojson })
             });
-        } catch(err) { console.error(err); }
+        } catch(err) { }
     }
 }
 
@@ -768,7 +756,6 @@ function loadSavedArea(index) {
 
 function setupLayerListeners(layer, index) {
     layer.on('pm:update', (e) => {
-        console.log("Layer atualizado (editado):", e);
         const newGeojson = layer.toGeoJSON();
         updateSavedArea(index, newGeojson, layer);
     });
@@ -802,9 +789,7 @@ async function updateSavedArea(index, geojson, layer) {
                 geo_json: geojson
             })
         });
-        console.log("Área sincronizada com a API após edição.");
     } catch (err) {
-        console.error("Erro ao sincronizar edição com a API:", err);
     }
 }
 
@@ -859,13 +844,11 @@ function resetUI() {
 }
 
 function showLoading() {
-    console.log("Iniciando carregamento...");
     const loader = document.getElementById('agLoader');
     if(loader) loader.classList.remove('hidden');
 }
 
 function hideLoading() {
-    console.log("Finalizando carregamento...");
     const loader = document.getElementById('agLoader');
     if(loader) loader.classList.add('hidden');
     const grid = document.querySelector('.ag-dashboard-grid');

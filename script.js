@@ -2,8 +2,8 @@
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker Registered', reg))
-            .catch(err => console.log('Service Worker registration failed', err));
+            .then(reg => {}) // Removido log
+            .catch(err => {}); // Removido log
     });
 }
 
@@ -1825,7 +1825,10 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
  * Builds a rich Portuguese-language prompt with all available weather data.
  */
 function buildWeatherPrompt(currentData, forecastData, aqiData) {
-    const now = new Date();
+    const timezone = currentData.timezone || 0;
+    const localTimeEpoch = new Date().getTime() + (timezone * 1000) + (new Date().getTimezoneOffset() * 60000);
+    const now = new Date(localTimeEpoch);
+    
     const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
     const dateStr = `${weekdays[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
@@ -1995,11 +1998,8 @@ async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
         }
 
         const data = await response.json();
-        console.log('[AI Weather] Full response:', JSON.stringify(data, null, 2));
 
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        console.log('[AI Weather] Raw text:', rawText);
-        console.log('[AI Weather] Finish reason:', data?.candidates?.[0]?.finishReason);
 
         if (!rawText) {
             const reason = data?.candidates?.[0]?.finishReason || 'sem conteúdo';
@@ -2037,10 +2037,22 @@ async function analyzeWeatherWithAI(currentData, forecastData, aqiData) {
         renderAIInsights(parsed.insights);
 
     } catch (err) {
-        console.error('[AI Weather]', err);
+        try {
+            // Tenta gerar os insights locais dinâmicos (fallback)
+            const fallbackResponse = window.generateLocalFallbackInsights(currentData, forecastData, aqiData);
+            
+            if (fallbackResponse && fallbackResponse.insights) {
+                renderAIInsights(fallbackResponse.insights);
+                return; // Sucesso com a redundância
+            }
+        } catch (fallbackErr) {
+            // Falha silenciosa
+        }
+
+        // Caso ambos falhem (raro), mostra o estado de erro discreto
         loadingEl.style.display = 'none';
         errorState.style.display = 'flex';
-        if (errorTextEl) errorTextEl.textContent = `Não foi possível gerar a análise: ${err.message}`;
+        if (errorTextEl) errorTextEl.textContent = `Análise temporariamente indisponível.`;
     }
 }
 
