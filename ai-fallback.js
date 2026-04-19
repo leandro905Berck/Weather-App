@@ -76,7 +76,6 @@ const FALLBACK_ENGINE = {
                 "Sensação de mormaço em ${city} com ${temp}°C. ${desc} predomina nesta ${period}.",
                 "Prepare o ventilador! ${city} atinge ${temp}°C sob um céu de ${desc}.",
                 "Tarde escaldante em ${city} com ${temp}°C. A umidade de ${humidity}% aumenta o abafamento.",
-                "Clima de praia em ${city}! Faz ${temp}°C nesta ${period} ensolarada de ${season}.",
                 "O verão antecipado em ${city}: temos ${temp}°C e ${desc} agora.",
                 "Ar quente pairando sobre ${city}. Registramos ${temp}°C nesta ${period}.",
                 "Dia de sol forte em ${city}! Proteja-se do calor de ${temp}°C.",
@@ -189,7 +188,7 @@ const FALLBACK_ENGINE = {
                 "Cuidado redobrado com a pele sob este sol com UV ${uv}."
             ],
             aqi_bad: [
-                "Qualidade do ar ruim. Evite atividades físicas externas.",
+                "Qualidade do ar ruins. Evite atividades físicas externas.",
                 "Ar poluído em ${city} hoje. Grupos sensíveis devem ter cautela.",
                 "Partículas no ar atingem níveis preocupantes em ${city}.",
                 "Proteja seus pulmões: o índice de poluição está alto."
@@ -311,12 +310,36 @@ const FALLBACK_ENGINE = {
         const timezone = current.timezone || 0;
         const localTimeEpoch = new Date().getTime() + (timezone * 1000) + (new Date().getTimezoneOffset() * 60000);
         const now = new Date(localTimeEpoch);
-        const days = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
-        const dayName = days[now.getDay()];
+        const daysArr = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+        const dayName = daysArr[now.getDay()];
         const is_weekend = [0, 6].includes(now.getDay());
         const season = this.getSeason(current?.coord?.lat || 0, now.getMonth() + 1);
         const period = this.getTimeOfDay(now.getHours());
         const moon = this.getMoonPhase(now);
+
+        // Busca eventos significativos nos próximos 5 dias (Chuva ou Calor)
+        let nextEventData = null;
+        if (forecast?.list) {
+            const rainEvent = forecast.list.find(item => item.pop >= 0.5);
+            const heatEvent = forecast.list.find(item => item.main.temp_max >= 32);
+
+            if (rainEvent) {
+                const d = new Date(rainEvent.dt * 1000);
+                nextEventData = { 
+                    type: 'chuva', 
+                    day: daysArr[d.getDay()], 
+                    prob: Math.round(rainEvent.pop * 100), 
+                    value: Math.round(rainEvent.main.temp) 
+                };
+            } else if (heatEvent) {
+                const d = new Date(heatEvent.dt * 1000);
+                nextEventData = { 
+                    type: 'calor', 
+                    day: daysArr[d.getDay()], 
+                    value: Math.round(heatEvent.main.temp_max) 
+                };
+            }
+        }
 
         let uv_level = 'baixo';
         if (uv >= 11) uv_level = 'extremo';
@@ -381,7 +404,6 @@ const FALLBACK_ENGINE = {
             'Pressão estável em ${pressure}hPa com visibilidade de ${visibility}km.'
         ];
 
-        // Análise Especial de Dados
         if (Math.abs(feels_diff) >= 3) {
             flavorPhrases.push(`A sensação térmica está ${feels_diff > 0 ? 'maior' : 'menor'} que a temperatura real (${feels_like}°C) devido ${humidity > 60 ? 'à umidade' : 'ao vento'}.`);
         }
@@ -399,21 +421,33 @@ const FALLBACK_ENGINE = {
             message: this.interpolate(this.combineTemplates([...this.templates.RESUMO[resumoGroup], ...flavorPhrases], 2), ctx)
         });
 
-        // 2. RESOLVER SEGUNDO INSIGHT (Saúde ou Vibe)
-        const rand = Math.random();
-        if (rand < 0.5) {
-            let hG = 'mild';
-            if (temp >= 32) hG = 'heat_stress';
-            else if (temp <= 10) hG = 'cold_respiratory';
-            else if (aqiVal >= 4) hG = 'aqi_bad';
-            else if (aqiVal >= 2) hG = 'aqi_moderate';
-            else if (uv >= 6) hG = 'uv_high';
-            else if (pop > 50) hG = 'rain_mobility';
-            else if (humidity < 30) hG = 'dry_air';
-            insights.push({ icon: '🏥', category: 'Saúde', title: 'Bem-Estar', message: this.interpolate(this.getRandom(this.templates.SAUDE[hG] || this.templates.SAUDE.mild), ctx) });
+        // 2. RESOLVER SEGUNDO INSIGHT (Prioridade: Previsão > Saúde > Vibe)
+        if (nextEventData) {
+            const isRain = nextEventData.type === 'chuva';
+            insights.push({
+                icon: isRain ? '☔' : '🔥',
+                category: 'Previsão',
+                title: isRain ? 'Olho no Céu' : 'Onda de Calor',
+                message: isRain 
+                    ? `Programe-se: há ${nextEventData.prob}% de chance de chuva em ${city} para esta ${nextEventData.day}.`
+                    : `Prepare o ventilador! O calor deve apertar em ${city} nesta ${nextEventData.day}, atingindo ${nextEventData.value}°C.`
+            });
         } else {
-            const hT = this.getRandom(['poetic', 'casual', 'motivational']);
-            insights.push({ icon: '✨', category: 'Vibe', title: 'Momento', message: this.interpolate(this.getRandom(this.templates.HUMOR[hT]), ctx) });
+            const rand = Math.random();
+            if (rand < 0.5) {
+                let hG = 'mild';
+                if (temp >= 32) hG = 'heat_stress';
+                else if (temp <= 10) hG = 'cold_respiratory';
+                else if (aqiVal >= 4) hG = 'aqi_bad';
+                else if (aqiVal >= 2) hG = 'aqi_moderate';
+                else if (uv >= 6) hG = 'uv_high';
+                else if (pop > 50) hG = 'rain_mobility';
+                else if (humidity < 30) hG = 'dry_air';
+                insights.push({ icon: '🏥', category: 'Saúde', title: 'Bem-Estar', message: this.interpolate(this.getRandom(this.templates.SAUDE[hG] || this.templates.SAUDE.mild), ctx) });
+            } else {
+                const hT = this.getRandom(['poetic', 'casual', 'motivational']);
+                insights.push({ icon: '✨', category: 'Vibe', title: 'Momento', message: this.interpolate(this.getRandom(this.templates.HUMOR[hT]), ctx) });
+            }
         }
 
         // 3. RESOLVER DICA
