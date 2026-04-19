@@ -31,7 +31,42 @@ const FALLBACK_ENGINE = {
         return arr[Math.floor(Math.random() * arr.length)];
     },
 
-    // 2. BIBLIOTECA DE TEMPLATES (MASSIVA)
+    getWeightedRandom(arr, weights) {
+        const total = weights.reduce((a, b) => a + b, 0);
+        let random = Math.random() * total;
+        for (let i = 0; i < arr.length; i++) {
+            if (random < weights[i]) return arr[i];
+            random -= weights[i];
+        }
+        return arr[arr.length - 1];
+    },
+
+    combineTemplates(templates, count = 2) {
+        const selected = [];
+        const pool = [...templates];
+        
+        const firstIdx = Math.floor(Math.random() * pool.length);
+        selected.push(pool.splice(firstIdx, 1)[0]);
+
+        if (count > 1 && pool.length > 0) {
+            const hasCity = selected[0].includes('${city}');
+            const hasTemp = selected[0].includes('${temp}');
+            
+            let filteredPool = pool.filter(t => {
+                if (hasCity && t.includes('${city}')) return false;
+                if (hasTemp && t.includes('${temp}')) return false;
+                return true;
+            });
+
+            const finalPool = filteredPool.length > 0 ? filteredPool : pool;
+            const secondIdx = Math.floor(Math.random() * finalPool.length);
+            selected.push(finalPool[secondIdx]);
+        }
+
+        return selected.join(' ');
+    },
+
+    // 2. BIBLIOTECA DE TEMPLATES (ULTRA-MASSIVA)
     templates: {
         RESUMO: {
             heat: [
@@ -45,16 +80,16 @@ const FALLBACK_ENGINE = {
                 "O verão antecipado em ${city}: temos ${temp}°C e ${desc} agora.",
                 "Ar quente pairando sobre ${city}. Registramos ${temp}°C nesta ${period}.",
                 "Dia de sol forte em ${city}! Proteja-se do calor de ${temp}°C.",
-                "Clima de deserto em ${city}! ${temp}°C e sensação de abafamento constante.",
-                "O sol não perdoa: ${city} sob ${temp}°C nesta ${period} de ${season}.",
-                "Fritando em ${city}! Termômetros marcam ${temp}°C, mormaço total no ar.",
-                "Calorão histórico? ${city} registra ${temp}°C sob um céu de ${desc}.",
-                "Dia de derreter em ${city}. ${temp}°C e umidade em ${humidity}% geram desconforto.",
-                "Solzão na medida (ou nem tanto)! Faz ${temp}°C agora em ${city}.",
-                "Sombra e água fresca! ${city} atinge ${temp}°C com ventos de ${wind}km/h.",
-                "Mormaço pesado em ${city}. Os ${temp}°C parecem bem mais nesta ${period}.",
-                "O asfalto ferve em ${city}! Registramos ${temp}°C sob um céu de ${desc}.",
-                "Clima tropical raiz em ${city}: calor de ${temp}°C e umidade de ${humidity}%."
+                "Clima tropical raiz em ${city}: calor de ${temp}°C e umidade de ${humidity}%.",
+                "O sol não dá trégua em ${city} com ${temp}°C.",
+                "Calor intenso registrado nesta ${period} de ${season}.",
+                "Sensação de mormaço predomina sob um céu de ${desc}.",
+                "Termômetros batendo ${temp}°C agora.",
+                "Clima de ${season} puro tomando conta da região.",
+                "O asfalto ferve enquanto registramos ${temp}°C.",
+                "Dia de derreter! Proteja-se do sol forte.",
+                "Abafamento constante com umidade em ${humidity}%.",
+                "Sombra e água fresca são essenciais neste momento."
             ],
             cold: [
                 "Clima gelado em ${city}! Faz ${temp}°C nesta ${period} de ${season}.",
@@ -62,200 +97,184 @@ const FALLBACK_ENGINE = {
                 "O frio chegou com tudo em ${city}: ${temp}°C registrados e ${desc}.",
                 "Ideal para um café: ${city} registra ${temp}°C sob um céu de ${desc}.",
                 "Blusa reforçada em ${city}! Termômetros em ${temp}°C nesta ${period} de ${season}.",
-                "Madrugada fria em ${city}? Agora temos ${temp}°C com ${desc}.",
                 "Inverno rigoroso em ${city}: apenas ${temp}°C registrados.",
                 "O vento frio corta ${city} hoje. Faz ${temp}°C com ${desc}.",
-                "Tempo gelado predominando em ${city} nesta ${period} com ${temp}°C.",
-                "${city} sente o rigor da ${season}: temperatura estável em ${temp}°C.",
-                "Frio cortante em ${city}! Proteja as extremidades do corpo, faz ${temp}°C.",
-                "Madrugada glacial registrada em ${city}. Agora os termômetros marcam ${temp}°C.",
-                "O clima de ${city} hoje lembra o Polo Sul! Mantenha-se aquecido com ${temp}°C.",
-                "Friaca braba em ${city}! Apenas ${temp}°C e vento de ${wind}km/h.",
-                "Clima de Gramado em ${city}? ${temp}°C e céu de ${desc} dão o tom.",
-                "Vento gelado em ${city}. Proteja-se, faz ${temp}°C nesta ${period}.",
-                "${city} vira uma geladeira! Registramos ${temp}°C agora no termômetro.",
-                "Ideal para fondue: ${city} marca ${temp}°C com umidade de ${humidity}%.",
-                "Ar polar sobre ${city}. Prepare o cachecol para encarar os ${temp}°C.",
-                "O orvalho congela em ${city}. Temos ${temp}°C e uma brisa de ${wind}km/h."
+                "Clima gelado em ${city}! Faz apenas ${temp}°C.",
+                "O frio chegou com tudo nesta ${period} de ${season}.",
+                "Ideal para um café enquanto os termômetros marcam ${temp}°C.",
+                "Vento frio corta a cidade sob um céu de ${desc}.",
+                "Prepare o casaco reforçado para encarar esses ${temp}°C.",
+                "Friaca braba atingindo a região agora.",
+                "Ar polar sobre ${city} derruba a temperatura.",
+                "A sensação térmica parece ainda menor que ${temp}°C.",
+                "Tempo firme mas muito frio nesta ${period}."
             ],
             snow: [
-                "Neve em ${city}! Um fenômeno raro e magnífico ocorrendo agora com ${temp}°C.",
-                "Cenário de filme em ${city}: neve caindo e temperatura em ${temp}°C.",
-                "Tudo branco em ${city}! A neve transforma a paisagem nesta ${period} de ${temp}°C.",
-                "Alerta de neve acumulada em ${city}. Cuidado ao circular, faz ${temp}°C.",
-                "Frio extremo e neve em ${city}. Aproveite a vista, mas mantenha-se em local aquecido.",
-                "Flocos de neve em ${city}! Um espetáculo visual com apenas ${temp}°C.",
-                "Inverno mágico em ${city}: a neve cobre tudo enquanto faz ${temp}°C.",
-                "Alerta de gelo e neve em ${city}. Mantenha-se seguro nos ${temp}°C.",
-                "Cenário glacial em ${city}. A neve traz silêncio e frio de ${temp}°C.",
-                "Neve caindo suave em ${city}. Um registro histórico com ${temp}°C agora."
+                "Neve em ${city}! Um espetáculo raro com ${temp}°C.",
+                "Cenário de filme: flocos caindo e temperatura em ${temp}°C.",
+                "Tudo branco lá fora nesta ${period} glacial.",
+                "Inverno mágico transformando a paisagem.",
+                "Frio extremo acompanhado de precipitação de neve."
             ],
             mild: [
                 "${city} tem uma ${period} de ${season} agradável. Faz ${temp}°C com ${desc}.",
                 "Clima ameno e confortável em ${city} hoje: ${temp}°C e ${desc}.",
                 "Uma ${period} tranquila em ${city}! A temperatura está em ${temp}°C.",
-                "${city} registra ${temp}°C nesta ${period} de ${season}. Condição de ${desc}.",
                 "Tempo bom em ${city}! ${temp}°C ideais para circular ao ar livre.",
-                "${city} desfruta de uma ${period} refrescante com ${temp}°C.",
-                "Equilíbrio térmico em ${city}: nem muito quente, nem frio. Apenas ${temp}°C.",
-                "Um toque de frescor nesta ${period} em ${city}. Faz ${temp}°C agora.",
-                "${city} apresenta um clima clássico de ${season}: ${temp}°C e ${desc}.",
-                "Dia muito agradável em ${city}! Aproveite os ${temp}°C e céu de ${desc}.",
-                "Clima de primavera em ${city}! ${temp}°C perfeitos para um passeio.",
-                "Ar puro e temperatura na medida: ${city} marca ${temp}°C hoje.",
-                "Nem casaco, nem ventilador: ${city} está com ótimos ${temp}°C.",
-                "A ${period} em ${city} convida para sair. São ${temp}°C com céu de ${desc}.",
-                "Frescor matinal se estende em ${city}. Registramos ${temp}°C agora.",
-                "Dia de luz suave em ${city}. Os ${temp}°C trazem conforto total.",
-                "Clima harmônico em ${city}. ${temp}°C e umidade de ${humidity}%.",
-                "Aproveite o equilíbrio: ${city} está com temperatura de ${temp}°C.",
-                "Tempo firme e agradável em ${city}. Faz ${temp}°C nesta ${period}.",
-                "Paz no horizonte de ${city}: clima estável com ${temp}°C e ${desc}."
+                "${city} registra ${temp}°C nesta ${period} de ${season}. Condição de ${desc}.",
+                "${city} tem uma ${period} muito agradável com ${temp}°C.",
+                "Clima ameno e confortável sob um céu de ${desc}.",
+                "Uma ${period} tranquila com temperatura em ${temp}°C.",
+                "Tempo bom para circular ao ar livre agora.",
+                "Frescor de ${season} trazendo equilíbrio térmico.",
+                "Dia de luz suave e temperatura na medida.",
+                "Nem casaco, nem ventilador: os ${temp}°C estão ideais.",
+                "Aproveite este equilíbrio térmico em ${city}."
             ],
             rain: [
-                "Tempo instável em ${city} com ${temp}°C e ${desc}. Clima típico de ${season}.",
-                "Chuva em ${city} nesta ${period}. Os termômetros marcam ${temp}°C agora.",
-                "O clima em ${city} pede atenção: ${desc} com ${temp}°C nesta ${period}.",
-                "Dia molhado em ${city}! ${desc} com umidade em ${humidity}%.",
-                "Guarda-chuva à mão em ${city}! Temos ${temp}°C e chuva constante.",
-                "${city} sob águas: ${desc} registrado agora com ${temp}°C.",
-                "Precipitação em ${city} refresca o ar para ${temp}°C nesta ${period}.",
-                "Tempo fechado e úmido em ${city}. Faz ${temp}°C e umidade em ${humidity}%.",
-                "Chuva leve em ${city} nesta ${period} de ${season}. Temperatura em ${temp}°C.",
-                "O som da chuva em ${city}! Faz ${temp}°C com umidade alta.",
-                "Céu chorando em ${city}. ${desc} com ${temp}°C e muita umidade no ar.",
-                "Pé d'água em ${city}! ${desc} predominando com força nesta ${period}.",
-                "Barulhinho de chuva em ${city}. Faz ${temp}°C, clima de filme hoje.",
-                "Guarda-chuva é o acessório do dia em ${city}. ${desc} ocorrendo agora.",
-                "Refresco vindo do céu: chuva em ${city} baixa o calor para ${temp}°C.",
-                "Solo molhado em ${city}. A umidade de ${humidity}% traz frescor com ${temp}°C.",
-                "Chuva persistente em ${city}. Os termômetros não passam de ${temp}°C.",
-                "Dia cinzento e úmido em ${city}. ${desc} com temperatura de ${temp}°C.",
-                "A natureza agradece: chuva em ${city} com temperatura amena de ${temp}°C.",
-                "Clima de interior: chuva em ${city} e aquele cheiro de terra molhada."
+                "Tempo instável em ${city} com ${temp}°C e ${desc}.",
+                "Chuva refresca o ar nesta ${period} de ${season}.",
+                "O clima pede atenção devido ao ${desc} registrado.",
+                "Dia molhado com umidade em ${humidity}%.",
+                "Guarda-chuva à mão enquanto faz ${temp}°C.",
+                "Precipitação constante trazendo frescor à região.",
+                "O som da chuva domina esta ${period} em ${city}.",
+                "Refresco vindo do céu baixa o calor para ${temp}°C.",
+                "Solo molhado e temperatura amena agora.",
+                "Clima de interior com aquele cheirinho de terra molhada."
             ],
             storm: [
-                "Alerta de tempestade em ${city}! ${desc} com ventos de ${wind}km/h.",
-                "Tempo severo em ${city}: tempestades isoladas e ${temp}°C agora.",
-                "Cuidado em ${city}! ${desc} forte com raios e rajadas de vento.",
-                "Tempestade de ${season} atingindo ${city}. Procure abrigo seguro.",
-                "Céu perigoso em ${city}: ${desc} intensa nestas últimas horas.",
-                "O tempo fechou pesado em ${city}! ${desc} com muitos raios e trovões.",
-                "Cuidado redobrado em ${city}! Tempestade severa com ${temp}°C.",
-                "Céu cor de chumbo sobre ${city}. ${desc} e ventos fortes de ${wind}km/h.",
-                "Alerta meteorológico para ${city}: risco de alagamentos com esta tempestade.",
-                "A força da natureza em ${city}: ventania e ${desc} assustam nesta ${period}."
+                "Alerta de tempestade em ${city}! Cuidado com ${desc}.",
+                "Tempo severo com ventos de ${wind}km/h.",
+                "Raios e trovões marcam esta ${period} de ${temp}°C.",
+                "Céu perigoso e instabilidade extrema atingindo a região.",
+                "Procure abrigo seguro até a tempestade passar."
             ],
             cloudy: [
-                "Céu encoberto em ${city}. Faz ${temp}°C nesta ${period} cinzenta.",
-                "Muitas nuvens sobre ${city} agora. Temperatura amena de ${temp}°C.",
-                "${city} sob um tapete de nuvens: ${desc} com ${temp}°C.",
-                "O sol se esconde em ${city} nesta ${period} nublada de ${season}.",
-                "Clima nublado mas estável em ${city}. Faz ${temp}°C no momento.",
-                "Sol com preguiça em ${city}. ${desc} domina a ${period} totalmente.",
-                "Tapete de nuvens cinzas sobre ${city}. Faz ${temp}°C e vento de ${wind}km/h.",
-                "Clima de 'fica em casa': céu nublado em ${city} com ${temp}°C.",
-                "Luz difusa em ${city}. O sol não consegue romper o ${desc} de hoje.",
-                "Dia opaco em ${city}. ${desc} traz um tom melancólico com ${temp}°C."
+                "Céu encoberto em ${city} com ${temp}°C.",
+                "Tapete de nuvens cinzas domina o horizonte agora.",
+                "O sol se esconde nesta ${period} nublada.",
+                "Luz difusa e clima estável na região.",
+                "Dia opaco com ventos de ${wind}km/h e ${desc}."
+            ],
+            fog: [
+                "Névoa densa em ${city} reduzindo a visibilidade.",
+                "Clima misterioso envolvendo a paisagem com ${temp}°C.",
+                "Atenção ao dirigir: neblina forte nesta ${period}.",
+                "Ar úmido e visibilidade curta marcam o momento."
+            ],
+            windy: [
+                "Ventania em ${city}! Rajadas de ${wind}km/h registradas.",
+                "Segure o chapéu: o ar está em movimento intenso.",
+                "Dia de ventos fortes soprando sob um céu de ${desc}.",
+                "A ventania refresca (ou gela) a ${period} em ${city}."
+            ],
+            hail: [
+                "Granizo em ${city}! Pedras de gelo caindo agora.",
+                "Fenômeno intenso e raro com temperatura em ${temp}°C.",
+                "Alerta de granizo: proteja janelas e veículos imediatamente."
             ]
         },
         SAUDE: {
             dry_air: [
-                "Ar muito seco em ${city} (${humidity}%). Hidrate-se constantemente!",
-                "Atenção à hidratação! Umidade em ${humidity}% em ${city} dificulta a respiração.",
-                "Umidade baixa registrada (${humidity}%). Use umidificadores se estiver em ambiente fechado.",
-                "Tempo seco em ${city} pode causar irritação. Beba bastante água agora.",
-                "Cuidado com as vias aéreas: a umidade está crítica em ${city} (${humidity}%).",
-                "Hidrate-se! Com ${humidity}% de umidade, sua pele e pulmões precisam de atenção.",
-                "Nível de umidade abaixo do ideal em ${city}. Evite exercícios intensos no seco.",
-                "Umidade do ar em ${humidity}%. Mantenha o corpo hidratado nesta ${period}.",
-                "Alerta de ar seco em ${city}. A saúde respiratória exige cuidados extras.",
-                "Proteja-se do ressecamento: tome água, mesmo sem sede, pois a umidade está em ${humidity}%."
+                "Ar muito seco (${humidity}%). Hidrate-se constantemente!",
+                "Umidade baixa dificulta a respiração. Beba água agora.",
+                "Cuidado com as vias aéreas: a umidade está crítica em ${city}.",
+                "Proteja-se do ressecamento: tome água mesmo sem sede."
             ],
             uv_high: [
-                "Índice UV perigoso! Use protetor solar mesmo com ${desc} em ${city}.",
-                "Proteção essencial: radiação UV alta nesta ${period} em ${city}.",
-                "Sol forte em ${city}! Evite exposição direta entre 10h e 16h para evitar queimaduras.",
-                "Fator de proteção obrigatório em ${city} hoje. Radiação UV extrema atingida.",
-                "Não se engane com as nuvens: o índice UV está alto em ${city} (${temp}°C).",
-                "Pele protegida sempre! O UV de hoje em ${city} não perdoa descuidos.",
-                "Chapéu e óculos de sol são seus melhores amigos em ${city} nesta ${period}.",
-                "Alerta de radiação solar intensa em ${city}. Busque sombra sempre que possível.",
-                "A radiação ultravioleta está em níveis críticos em ${city} agora.",
-                "Cuidado redobrado com crianças e idosos sob este UV forte em ${city}."
+                "Índice UV ${uv} (${uv_level}). Use protetor solar e acessórios.",
+                "Sol forte em ${city}! Evite exposição direta até o fim da tarde.",
+                "Fator de proteção obrigatório em ${city}. Índice UV atingiu nível ${uv_level}.",
+                "Cuidado redobrado com a pele sob este sol com UV ${uv}."
             ],
             aqi_bad: [
-                "Qualidade do ar ruim (Índice ${aqi}). Evite atividades físicas intensas ao ar livre.",
-                "Ar poluído em ${city} hoje. Grupos sensíveis devem ter cuidado redobrado.",
-                "Níveis de poluição elevados em ${city}. Use máscara se for circular em áreas de tráfego.",
-                "A qualidade do ar em ${city} está prejudicada nesta ${period}. Evite esforço físico.",
-                "Partículas no ar atingem níveis preocupantes em ${city}. Respire com cautela.",
-                "Alerta ambiental em ${city}: poluição acima do recomendado para a saúde.",
-                "Ar pesado em ${city}. Se sentir cansaço, procure ambientes fechados e frescos.",
-                "Visibilidade e saúde afetadas pela poluição em ${city} (AQI ${aqi}).",
-                "Proteja seus pulmões: o índice de qualidade do ar está ruim em ${city} agora.",
-                "Dia desfavorável para esportes externos em ${city} devido à má qualidade do ar."
+                "Qualidade do ar ruim. Evite atividades físicas externas.",
+                "Ar poluído em ${city} hoje. Grupos sensíveis devem ter cautela.",
+                "Partículas no ar atingem níveis preocupantes em ${city}.",
+                "Proteja seus pulmões: o índice de poluição está alto."
+            ],
+            aqi_moderate: [
+                "Qualidade do ar moderada em ${city}. Sensíveis podem sentir desconforto.",
+                "Ar com nível médio de poluentes. Fique atento se tiver alergias.",
+                "Condições do ar aceitáveis, mas não ideais para todos.",
+                "Qualidade do ar regular hoje. Respire com moderação ao ar livre."
             ],
             mild: [
-                "Qualidade do ar excelente em ${city}! Ótimo momento para respirar fundo.",
-                "Umidade em ${humidity}%. Equilíbrio perfeito para sua saúde nesta ${period}.",
-                "Condições favoráveis para o bem-estar em ${city} hoje.",
-                "Respire aliviado: o ar de ${city} está puro e a temperatura agradável (${temp}°C).",
-                "Momento ideal para oxigenar o cérebro em um parque de ${city}.",
-                "Saúde em dia: umidade e qualidade do ar exemplares em ${city} agora.",
-                "Clima propício para o equilíbrio do corpo e mente em ${city}.",
-                "A umidade de ${humidity}% garante conforto respiratório nesta ${period}.",
-                "Níveis de poluentes baixos em ${city}. Aproveite o frescor do dia.",
-                "Tudo certo com o ambiente em ${city}: respire com tranquilidade."
+                "Umidade em ${humidity}%: equilíbrio favorável para sua saúde.",
+                "Condições estáveis para o bem-estar físico hoje.",
+                "Aproveite o frescor: o clima está confortável em ${city}.",
+                "Momento de equilíbrio térmico e conforto respiratório."
+            ],
+            heat_stress: [
+                "Calor excessivo! Evite esforços físicos sob o sol.",
+                "Risco de insolação: ${temp}°C exigem hidratação constante.",
+                "Atenção a idosos e crianças neste calorão de ${city}.",
+                "Busque locais frescos e arejados para evitar exaustão."
+            ],
+            cold_respiratory: [
+                "Frio intenso favorece gripes. Mantenha-se bem agasalhado.",
+                "Ar gelado pode irritar as vias aéreas. Use proteção.",
+                "Temperatura de ${temp}°C exige atenção com a respiração.",
+                "Previna-se contra resfriados nesta mudança de tempo."
+            ],
+            rain_mobility: [
+                "Chuva pode causar alagamentos em áreas baixas de ${city}.",
+                "Piso escorregadio: caminhe com atenção redobrada.",
+                "Trânsito lento previsto. Planeje sua rota com calma.",
+                "Monitore o tempo antes de sair para evitar transtornos."
+            ],
+            ideal_outdoor: [
+                "Condições perfeitas para atividades externas! Aproveite.",
+                "Céu e temperatura alinhados para um momento ao ar livre.",
+                "Parques e praças estão convidativos com esses ${temp}°C.",
+                "Clima colabora para exercícios e passeios relaxantes."
+            ]
+        },
+        HUMOR: {
+            poetic: [
+                "O céu de ${city} escreve poemas com tons de ${desc}.",
+                "${season} dança ao som do vento nesta ${period} inspiradora.",
+                "Nuvens contam histórias de ${temp}°C e horizontes serenos.",
+                "Pintura viva no horizonte: ${city} exibe sua melhor luz agora.",
+                "Como um quadro de ${season}, a paisagem sussurra tranquilidade."
+            ],
+            casual: [
+                "E aí, ${city}! Bora curtir esses ${temp}°C ou prefere o modo sofá? 😄",
+                "Resumo: ${desc}, ${temp}°C e aquela vibe clássica de ${season}.",
+                "Se o clima fosse um meme, hoje seria nota 10 pela originalidade! 😂",
+                "Status: ${temp}°C e vontade de um café (ou sorvete) em ${city}. ✅",
+                "Previsão do humor: 100% de chances de um dia incrível por aqui."
+            ],
+            motivational: [
+                "Cada ${period} é uma nova chance de brilhar em ${city}. Vamos!",
+                "O clima de hoje é o cenário perfeito para seus grandes planos.",
+                "Não espere o tempo ideal: você já tem ${temp}°C e disposição.",
+                "A ${season} traz oportunidades de ${temp}°C para crescer e conquistar.",
+                "Céu de ${desc} e coração de campeão: ${city} te espera hoje! 🌟"
             ]
         },
         DICA: [
-            "Bom momento para uma caminhada leve, aproveitando os ${temp}°C em ${city}.",
-            "Considere levar um casaco leve, a temperatura de ${temp}°C pode cair mais à noite.",
-            "Com ${desc}, a visibilidade está reduzida. Dirija com atenção em ${city}.",
-            "Aproveite a ${period} em ${city}! O clima de ${season} está inspirador hoje.",
-            "Não esqueça o guarda-chuva, o céu indica ${desc} e a umidade está alta.",
-            "Mantenha as janelas abertas para circular o ar de ${city} nesta ${period} agradável.",
-            "Ideal para atividades leves ao ar livre. O clima em ${city} está favorável.",
-            "Dia perfeito para fotografar as paisagens de ${city} sob esta luz de ${season}.",
-            "Economize energia: o clima ameno de ${temp}°C permite desligar o ar-condicionado.",
-            "Prefira roupas de tecidos naturais para lidar com a umidade de ${humidity}% em ${city}.",
-            "Regue suas plantas no fim da tarde para aproveitar a umidade de ${humidity}%.",
-            "Mantenha-se hidratado mesmo se não sentir calor; o corpo perde água com ${wind}km/h de vento.",
-            "Planeje sua rota evitando áreas arborizadas se houver rajadas de vento em ${city}.",
-            "Aproveite para ler um livro perto da janela nesta ${period} tranquila em ${city}.",
-            "Verifique a calibração dos pneus: mudanças bruscas para ${temp}°C afetam a pressão.",
-            "Ideal para um passeio no parque com os pets nesta temperatura de ${temp}°C.",
-            "Se for sair, não esqueça o protetor labial; o clima de ${season} pode ressecá-los.",
-            "Mantenha seu umidificador por perto se for passar muito tempo em locais lacrados.",
-            "Dia excelente para lavar roupas: a umidade e o vento de ${wind}km/h vão ajudar.",
-            "Aproveite a brisa de ${wind}km/h para ventilar sua casa em ${city} hoje.",
-            "Uma xícara de chá cai bem com este clima de ${temp}°C e ${desc}.",
-            "Dica de ouro: use este tempo de ${desc} para colocar as séries em dia.",
-            "Se for exercitar-se, prefira horários com temperatura próxima de ${temp}°C.",
-            "O vento de ${wind}km/h pode refrescar seu ambiente, abra as janelas opostas.",
-            "Mantenha uma garrafa de água sempre à vista, a umidade de ${humidity}% exige atenção."
-        ],
-        ALERTA: [
-            "Ventos de ${wind}km/h em ${city}. Cuidado com objetos soltos em sacadas.",
-            "Mudança brusca de tempo prevista. Acompanhe o radar para evitar surpresas.",
-            "Sensação térmica de ${temp}°C exige cuidado com o choque térmico.",
-            "Rajadas de vento detectadas! A segurança em áreas abertas de ${city} é prioridade.",
-            "Alerta de visibilidade baixa em ${city} devido a ${desc}. Reduza a velocidade.",
-            "Aviso de tempestade iminente! Procure abrigo e evite áreas descampadas.",
-            "Temperaturas batendo recordes para a ${season} em ${city}: atenção máxima.",
-            "Queda súbita de pressão atmosférica; mudança de tempo nas próximas horas.",
-            "Alerta de rajadas acima da média em ${city} (${wind}km/h). Telefone 193 se ver árvores em risco.",
-            "Clima severo se aproximando de ${city}. Recomenda-se cancelar atividades externas.",
-            "Alerta: condições propícias para mudanças rápidas no céu de ${city}.",
-            "Cuidado ao dirigir: o vento de ${wind}km/h pode afetar a estabilidade do veículo.",
-            "Evite estacionar debaixo de árvores com ventos de ${wind}km/h registrados.",
-            "Proteja seus eletrônicos: risco de descargas elétricas com esta ${desc}.",
-            "Mantenha-se informado: o clima em ${city} está em transição crítica agora."
+            "Com ${temp}°C e umidade em ${humidity}%, beba bastante água para evitar desidratação.",
+            "Bom momento para uma caminhada leve aproveitando o frescor.",
+            "Considere levar um casaco: a temperatura pode cair logo mais.",
+            "Com ${desc}, a visibilidade está reduzida. Dirija com atenção.",
+            "Aproveite a ${period}! O clima de ${season} está inspirador hoje.",
+            "Não esqueça o guarda-chuva: a umidade e o céu indicam mudança.",
+            "Mantenha as janelas abertas para renovar o ar da casa.",
+            "Ideal para atividades leves ao ar livre. Curta o momento.",
+            "Dia perfeito para fotografar as paisagens de ${city} agora.",
+            "Economize energia: o clima permite desligar o ar-condicionado.",
+            "Prefira roupas de tecidos naturais para lidar com a umidade.",
+            "Regue suas plantas no fim da tarde para melhor absorção.",
+            "Mantenha-se hidratado mesmo sem sentir sede; seu corpo agradece.",
+            "Evite áreas com árvores altas se houver rajadas de vento fortes.",
+            "Aproveite para ler ou relaxar nesta ${period} tranquila.",
+            "Verifique os pneus: mudanças de temperatura afetam a calibração."
         ]
     },
 
-    // 3. CÁLCULO DE FASE DA LUA (Aproximação astronômica)
+    // 3. FASE DA LUA
     getMoonPhase(date) {
         const lp = 2551443;
         const new_moon = new Date(1970, 0, 7, 20, 35, 0).getTime();
@@ -263,9 +282,9 @@ const FALLBACK_ENGINE = {
         if (phase < 0.06) return "Nova";
         if (phase < 0.19) return "Crescente Côncava";
         if (phase < 0.31) return "Quarto Crescente";
-        if (phase < 0.44) return "Crescente Gibosa";
+        if (phase < 0.44) return "Crescente Gibosa (mais da metade iluminada)";
         if (phase < 0.56) return "Cheia";
-        if (phase < 0.69) return "Minguante Gibosa";
+        if (phase < 0.69) return "Minguante Gibosa (mais da metade iluminada)";
         if (phase < 0.81) return "Quarto Minguante";
         if (phase < 0.94) return "Minguante Côncava";
         return "Nova";
@@ -273,7 +292,6 @@ const FALLBACK_ENGINE = {
 
     // 4. FUNÇÃO PRINCIPAL
     generate(current, forecast, aqi) {
-        // Proteção contra dados ausentes
         if (!current || !current.main || !current.weather) return null;
 
         const city = current.name || 'sua região';
@@ -283,168 +301,147 @@ const FALLBACK_ENGINE = {
         const desc = current.weather[0].description;
         const aqiVal = aqi?.list?.[0]?.main?.aqi || 1;
         const uv = current.uvi || 0;
-
-        // Dados de Chuva/Neve Futura (Probabilidade)
+        const clouds = current.clouds?.all || 0;
         const pop = forecast?.list?.[0]?.pop ? Math.round(forecast.list[0].pop * 100) : 0;
-
-        // Busca o próximo evento significativo (chuva ou neve) nos 5 dias
-        const nextEvent = forecast?.list?.find(item => item.pop >= 0.3);
-        let nextEventData = null;
-
-        if (nextEvent && nextEvent.weather && nextEvent.weather[0]) {
-            const date = new Date(nextEvent.dt * 1000);
-            const days = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
-            const dayName = days[date.getDay()];
-            const hour = date.getHours();
-            const eventType = (nextEvent.weather[0].description.toLowerCase().includes('neve') || nextEvent.weather[0].description.toLowerCase().includes('snow')) ? 'neve' : 'chuva';
-
-            nextEventData = {
-                day: dayName,
-                time: `${hour}h`,
-                prob: Math.round(nextEvent.pop * 100),
-                type: eventType
-            };
-        }
+        const visibility = (current.visibility / 1000).toFixed(1);
+        const pressure = current.main.pressure;
+        const feels_like = Math.round(current.main.feels_like);
+        const feels_diff = feels_like - temp;
 
         const timezone = current.timezone || 0;
         const localTimeEpoch = new Date().getTime() + (timezone * 1000) + (new Date().getTimezoneOffset() * 60000);
         const now = new Date(localTimeEpoch);
-
+        const days = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+        const dayName = days[now.getDay()];
+        const is_weekend = [0, 6].includes(now.getDay());
         const season = this.getSeason(current?.coord?.lat || 0, now.getMonth() + 1);
         const period = this.getTimeOfDay(now.getHours());
         const moon = this.getMoonPhase(now);
-        const clouds = current.clouds?.all || 0;
 
-        // Lógica de Amanhecer / Entardecer / Dia / Noite
+        let uv_level = 'baixo';
+        if (uv >= 11) uv_level = 'extremo';
+        else if (uv >= 8) uv_level = 'muito alto';
+        else if (uv >= 6) uv_level = 'alto';
+        else if (uv >= 3) uv_level = 'moderado';
+
         const sunrise = current.sys?.sunrise ? new Date(current.sys.sunrise * 1000) : null;
         const sunset = current.sys?.sunset ? new Date(current.sys.sunset * 1000) : null;
         const diffSunrise = sunrise ? Math.abs(now - sunrise) / 60000 : 999;
         const diffSunset = sunset ? Math.abs(now - sunset) / 60000 : 999;
-
         let solarStatus = (now > sunrise && now < sunset) ? 'Dia' : 'Noite';
         if (diffSunrise < 40) solarStatus = 'Amanhecer';
         else if (diffSunset < 40) solarStatus = 'Entardecer';
 
         const ctx = {
             city, temp, humidity, wind, desc, season, period, aqi: aqiVal, uv, pop, moon, clouds, solarStatus,
-            nextEventDay: nextEventData?.day,
-            nextEventTime: nextEventData?.time,
-            nextEventProb: nextEventData?.prob,
-            nextEventType: nextEventData?.type
+            feels_like, dayName, uv_level, visibility, pressure, feels_diff, is_weekend,
+            feeling: temp >= 30 ? 'abafado' : temp <= 10 ? 'gelado' : 'agradável',
+            sky_mood: clouds > 80 ? 'dramático' : clouds < 20 ? 'sereno' : 'equilibrado',
+            activity_suggestion: temp >= 25 && pop < 20 ? 'clube ou piscina' : temp <= 15 ? 'cinema' : 'parque',
+            humidity_tip: humidity > 60 ? 'cabelo frisado garantido' : 'hidratação ideal',
+            food_tip: temp >= 25 ? 'água de coco' : temp <= 15 ? 'chocolate quente' : 'suco natural',
+            wind_tip: wind > 20 ? 'esportes radicais' : 'um piquenique tranquilo',
+            temp_record_diff: Math.abs(56.7 - temp).toFixed(1),
+            evaporation_speed: humidity > 60 ? 'lenta' : 'rápida'
         };
 
         const insights = [];
 
-        // 1. RESOLVER RESUMO (Sempre o primeiro)
+        // 1. RESOLVER RESUMO (Ultra Dinâmico)
         let resumoGroup = 'mild';
         const d = desc.toLowerCase();
-
-        if (d.includes('tempestade') || d.includes('trovão') || d.includes('raios')) resumoGroup = 'storm';
-        else if (d.includes('neve') || d.includes('snow')) resumoGroup = 'snow';
-        else if (d.includes('chuva') || d.includes('garoa') || d.includes('chuvisco')) resumoGroup = 'rain';
-        else if (d.includes('nuvens') || d.includes('nublado') || d.includes('encoberto')) resumoGroup = 'cloudy';
+        if (d.includes('tempestade') || d.includes('trovão')) resumoGroup = 'storm';
+        else if (d.includes('neve')) resumoGroup = 'snow';
+        else if (d.includes('chuva') || d.includes('garoa')) resumoGroup = 'rain';
+        else if (d.includes('nuvens') || d.includes('nublado')) resumoGroup = 'cloudy';
+        else if (d.includes('névoa') || d.includes('neblina')) resumoGroup = 'fog';
+        else if (d.includes('granizo')) resumoGroup = 'hail';
+        else if (wind > 40) resumoGroup = 'windy';
         else if (temp >= 28) resumoGroup = 'heat';
         else if (temp <= 15) resumoGroup = 'cold';
 
-        const icons = { rain: '🌧️', heat: '☀️', cold: '❄️', mild: '🌤️', storm: '⛈️', cloudy: '☁️', snow: '❄️☃️' };
+        const icons = { rain: '🌧️', heat: '☀️', cold: '❄️', mild: '🌤️', storm: '⛈️', cloudy: '☁️', snow: '❄️☃️', fog: '🌫️', windy: '💨', hail: '🧊' };
         const titles = {
-            rain: ['Céu Chuvoso', 'Águas de ${season}', 'Radar de Chuva', 'Tempo Molhado', 'Chuva à Vista!', 'Céu Chorando', 'Molha o Chão', 'Refresco da Terra', 'Barulhinho de Chuva', 'Tempo de Guarda-Chuva', 'Dia Cinzento'],
-            heat: ['Calor Intenso', 'Sol Radiante', 'Alerta de Calor', 'Dia de Verão', 'Calorão!', 'O Sol Tá On!', 'Mormaço Forte', 'Clima Desértico', 'Fritando em ${city}', 'Verão Raiz', 'Abafamento Total'],
-            cold: ['Frio Intenso', 'Clima Gelado', 'Aviso de Frio', 'Baixas Temperaturas', 'Friozinho Bom?', 'Geada no Horizonte?', 'Toca e Cachecol', 'Clima de Montanha', 'Geladeira Aberta', 'Vento Cortante', 'Congelando em ${city}'],
-            mild: ['Tempo Bom', 'Céu Aberto', 'Clima Ameno', 'Dia Agradável', 'Clima Perfeito', 'Dia de Passeio', 'Frescor de ${season}', 'Equilíbrio Térmico', 'Paz no Horizonte', 'Céu de Brigadeiro', 'Aproveite o Dia'],
-            storm: ['Alerta Máximo', 'Tempestade!', 'Céu Perigoso', 'Clima Severo', 'Cuidado!', 'Tempo Fechou!', 'Força da Natureza', 'Raio e Trovão', 'Alerta de Perigo', 'Céu de Chumbo', 'Proteja-se!'],
-            cloudy: ['Muitas Nuvens', 'Céu Cinzento', 'Tempo Nublado', 'Horizonte Encoberto', 'Cadê o Sol?', 'Tapete Cinza', 'Luz Suave', 'Dia de Preguiça', 'Nuvens de Algodão', 'Clima em Suspenso', 'Sombra Natural'],
-            snow: ['Neve na Área', 'Alerta de Neve', 'Cenário Glacial', 'Mundo Branco', 'Neve à Vista!', 'Cenário Gelado', 'Inverno Mágico', 'Pó Branco', 'Frio de Filme', 'Boneco de Neve?', 'Alerta de Gelo']
+            rain: ['Céu Chuvoso', 'Águas de ${season}', '${dayName} chuvoso'],
+            heat: ['Calor Intenso', 'Sol Radiante', '${dayName} ensolarado!'],
+            cold: ['Frio Intenso', 'Clima Gelado', '${dayName} gelado'],
+            mild: ['Tempo Bom', 'Céu Aberto', '${dayName} agradável'],
+            storm: ['Alerta Máximo', 'Tempestade!', 'Céu Perigoso'],
+            cloudy: ['Muitas Nuvens', 'Céu Cinzento', 'Tempo Nublado'],
+            snow: ['Neve na Área', 'Alerta de Neve', 'Mundo Branco'],
+            fog: ['Baixa Visibilidade', 'Manto de Névoa'],
+            windy: ['Ventos Fortes', 'Rajadas Intensas'],
+            hail: ['Alerta de Granizo', 'Chuva de Gelo']
         };
 
-        // Adicionando frases contextuais ricas ao banco
-        const newAdditions = [
-            '${city} sob uma Lua ${moon}. A ${period} de ${season} segue com ${temp}°C e ${desc}.',
-            'A ${period} em ${city} registra ${temp}°C. A visibilidade indica ${desc} com ventos de ${wind}km/h.',
-            'Céu de ${city} mostra ${desc}. Temos ${humidity}% de umidade agora, clima típico de ${season}.',
-            'Sensação real de ${temp}°C em ${city}. Com o céu em ${desc}, a atmosfera de ${solarStatus} domina o horizonte.',
-            '${city} em modo ${season}: ${temp}°C e céu de ${desc}. A umidade de ${humidity}% dita o ritmo.',
-            'O panorama em ${city} é de ${desc}. Com ${temp}°C, a ${period} se desenrola sob a influência da Lua ${moon}.'
+        const flavorPhrases = [
+            '${city} tem um ${dayName} de ${desc} e ${temp}°C. Sensação de ${feels_like}°C.',
+            'O horizonte exibe tons de ${desc} nesta ${period} de ${season}.',
+            'Com a Lua ${moon}, a atmosfera de ${solarStatus} domina ${city}.',
+            'Pressão estável em ${pressure}hPa com visibilidade de ${visibility}km.'
         ];
 
-        // Lógica solar e de dia/noite
-        if (solarStatus === 'Amanhecer') {
-            newAdditions.push('O sol está surgindo em ${city}! Um belo amanhecer com ${temp}°C para começar o dia.');
-        } else if (solarStatus === 'Entardecer') {
-            newAdditions.push('O pôr do sol em ${city} está acontecendo. O entardecer de ${season} traz um tom dourado ao céu.');
+        // Análise Especial de Dados
+        if (Math.abs(feels_diff) >= 3) {
+            flavorPhrases.push(`A sensação térmica está ${feels_diff > 0 ? 'maior' : 'menor'} que a temperatura real (${feels_like}°C) devido ${humidity > 60 ? 'à umidade' : 'ao vento'}.`);
         }
-
-        if (solarStatus === 'Noite') {
-            if (moon === 'Nova' && clouds < 20) {
-                newAdditions.push('Com a Lua Nova e o céu limpo em ${city}, as estrelas estão magníficas hoje. Ótimo momento para observar o cosmos!');
-            } else if (moon === 'Cheia' && clouds === 0) {
-                newAdditions.push('A Lua Cheia está radiante com 100% de visibilidade em ${city}. Não perca a chance de admirar esse espetáculo agora!');
-            }
+        if (visibility < 5) {
+            flavorPhrases.push(`Visibilidade reduzida em ${city} (${visibility}km). Atenção ao se deslocar.`);
+        }
+        if (is_weekend && temp >= 25 && pop < 20) {
+            flavorPhrases.push(`Clima perfeito de final de semana em ${city}! Aproveite ao ar livre.`);
         }
 
         insights.push({
             icon: icons[resumoGroup] || '🌤️',
             category: 'Resumo',
             title: this.interpolate(this.getRandom(titles[resumoGroup] || ['Clima Agora']), ctx),
-            message: this.interpolate(this.getRandom([...this.templates.RESUMO[resumoGroup], ...newAdditions]), ctx)
+            message: this.interpolate(this.combineTemplates([...this.templates.RESUMO[resumoGroup], ...flavorPhrases], 2), ctx)
         });
 
-        // 2. RESOLVER PREVISÃO OU SAÚDE (Baseado em criticidade)
-        if (nextEventData && nextEventData.prob >= 40) {
-            const forecastTitles = nextEventData.type === 'neve' ?
-                ['Alerta de Neve', 'Olho no Floco', 'Neve à Vista'] :
-                ['Radar de Chuva', 'Programe-se', 'Olho no Céu', 'Tendência'];
-
-            insights.push({
-                icon: nextEventData.type === 'neve' ? '❄️' : '☔',
-                category: 'Previsão',
-                title: this.getRandom(forecastTitles),
-                message: this.interpolate(this.getRandom([
-                    'Fique atento: há ${nextEventProb}% de chance de ${nextEventType} em ${city} para esta ${nextEventDay} por volta de ${nextEventTime}.',
-                    'Se prepara, ${nextEventType} vindo aí! Prepare-se para ${nextEventDay} às ${nextEventTime} (${nextEventProb}% de chance).',
-                    'Possível ${nextEventType} detectada para ${nextEventDay}. A probabilidade é de ${nextEventProb}% por volta de ${nextEventTime}.'
-                ]), ctx)
-            });
-        } else if (temp <= 5) {
-            insights.push({
-                icon: '🧥', category: 'Saúde', title: 'Frio Extremo',
-                message: this.interpolate(this.getRandom([
-                    'Risco de hipotermia! A temperatura de ${temp}°C em ${city} exige roupas térmicas.',
-                    'Frio muito intenso. Proteja-se bem e evite exposição prolongada ao ar livre.'
-                ]), ctx)
-            });
-        } else if (uv >= 6 && solarStatus === 'Dia') {
-            insights.push({
-                icon: '🧴', category: 'Saúde', title: 'Proteção UV',
-                message: this.interpolate(this.getRandom(this.templates.SAUDE.uv_high), ctx)
-            });
-        } else if (humidity < 30) {
-            insights.push({
-                icon: '🌵', category: 'Saúde', title: 'Ar Muito Seco',
-                message: this.interpolate(this.getRandom(this.templates.SAUDE.dry_air), ctx)
-            });
+        // 2. RESOLVER SEGUNDO INSIGHT (Saúde ou Vibe)
+        const rand = Math.random();
+        if (rand < 0.5) {
+            let hG = 'mild';
+            if (temp >= 32) hG = 'heat_stress';
+            else if (temp <= 10) hG = 'cold_respiratory';
+            else if (aqiVal >= 4) hG = 'aqi_bad';
+            else if (aqiVal >= 2) hG = 'aqi_moderate';
+            else if (uv >= 6) hG = 'uv_high';
+            else if (pop > 50) hG = 'rain_mobility';
+            else if (humidity < 30) hG = 'dry_air';
+            insights.push({ icon: '🏥', category: 'Saúde', title: 'Bem-Estar', message: this.interpolate(this.getRandom(this.templates.SAUDE[hG] || this.templates.SAUDE.mild), ctx) });
         } else {
-            insights.push({
-                icon: '🌿', category: 'Saúde', title: 'Bem-Estar',
-                message: this.interpolate(this.getRandom(this.templates.SAUDE.mild), ctx)
-            });
+            const hT = this.getRandom(['poetic', 'casual', 'motivational']);
+            insights.push({ icon: '✨', category: 'Vibe', title: 'Momento', message: this.interpolate(this.getRandom(this.templates.HUMOR[hT]), ctx) });
         }
 
-        // 3. RESOLVER DICA (Sempre para fechar)
-        const dicaExtra = pop > 0 && pop < 40 ?
-            'A chance de chuva hoje é baixa (${pop}%), mas o clima pode mudar.' :
-            'Aproveite a Lua ${moon} para planejar sua semana em ${city}.';
+        // 3. RESOLVER DICA
+        insights.push({ icon: '💡', category: 'Dica', title: 'Sugestão', message: this.interpolate(this.getRandom(this.templates.DICA), ctx) });
 
-        const dicaTitles = ['Sugestão', 'Dica Valiosa', 'Se Liga', 'Presta Atenção', 'Pega a Visão', 'Fica a Dica', 'Anota Aí'];
+        // 4. EASTER EGGS
+        const easterEggs = [
+            { icon: '🔮', msg: "Em ${city}, a Lua ${moon} influencia as marés e o nosso ritmo biológico." },
+            { icon: '📊', msg: "${humidity}% de umidade indica que o ar em ${city} está ${humidity_tip}." },
+            { icon: '🍽️', msg: "Para este clima de ${temp}°C, o ideal é consumir ${food_tip}." },
+            { icon: '🧠', msg: "Ventos de ${wind}km/h em ${city} são perfeitos para ${wind_tip}." },
+            { icon: '🌡️', msg: "O recorde de calor na Terra é 56.7°C. ${city} está ${temp_record_diff}°C abaixo disso." },
+            { icon: '🔋', msg: "Temperaturas de ${temp}°C afetam a bateria do seu celular; evite o sol direto." },
+            { icon: '💧', msg: "Com ${humidity}% de umidade, a evaporação do suor é mais ${evaporation_speed}." },
+            { icon: '🛸', msg: "Curiosidade: Em Marte, a média é -62°C. Aqui em ${city} temos ${temp}°C." },
+            { icon: '🧘', msg: "A sensação de ${feeling} é um convite para 5 minutos de meditação." },
+            { icon: '🌳', msg: "Sabia? Árvores grandes evaporam até 400 litros de água em dias de ${temp}°C." },
+            { icon: '🧊', msg: "A ${temp}°C, a água congela em 0°C. ${city} está longe disso hoje!" },
+            { icon: '🌻', msg: "Girassóis seguem o sol, mas em dias de ${desc} eles se voltam uns para os outros." },
+            { icon: '🚗', msg: "Dirigir com ${desc} exige atenção nos pneus devido à temperatura." }
+        ];
 
-        insights.push({
-            icon: '💡',
-            category: 'Dica',
-            title: this.getRandom(dicaTitles),
-            message: this.interpolate(this.getRandom([...this.templates.DICA, dicaExtra]), ctx)
-        });
+        if (Math.random() > 0.66) {
+            const egg = this.getRandom(easterEggs);
+            insights.push({ icon: egg.icon, category: 'Curiosidade', title: 'Você Sabia?', message: this.interpolate(egg.msg, ctx) });
+        }
 
-        return { insights: insights.slice(0, 3) };
+        return { insights: insights.slice(0, 4) };
     },
 
     interpolate(str, ctx) {
