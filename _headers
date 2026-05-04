@@ -1,0 +1,20 @@
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/manifest.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/script.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/style.css
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/ai-fallback.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/config.js
+  Cache-Control: no-cache, no-store, must-revalidate

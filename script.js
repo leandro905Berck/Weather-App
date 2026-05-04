@@ -1,8 +1,35 @@
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
+        let isRefreshing = false;
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            window.location.reload();
+        });
+
         navigator.serviceWorker.register('./sw.js')
-            .then(reg => {}) // Removido log
+            .then((reg) => {
+                const activateUpdate = (worker) => {
+                    if (!worker) return;
+                    worker.addEventListener('statechange', () => {
+                        // New SW installed while an old one controls this page
+                        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                            worker.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    });
+                };
+
+                activateUpdate(reg.installing);
+
+                reg.addEventListener('updatefound', () => {
+                    activateUpdate(reg.installing);
+                });
+
+                // Check for updates shortly after load
+                setTimeout(() => reg.update(), 3000);
+            })
             .catch(err => {}); // Removido log
     });
 }
