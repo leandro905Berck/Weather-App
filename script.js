@@ -1004,6 +1004,73 @@ function buildPreviousHourlyFromCurrent(anchor, interpolatedItems, hoursBack = 3
     return previous;
 }
 
+function fillDayHoursTo23(itemsForDay) {
+    if (!itemsForDay || itemsForDay.length === 0) return [];
+
+    const sorted = [...itemsForDay].sort((a, b) => a.dt - b.dt);
+    const baseDate = new Date(sorted[0].dt * 1000);
+    const startOfDay = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), 0, 0, 0, 0);
+    const startTs = Math.floor(startOfDay.getTime() / 1000);
+
+    const byHour = new Map();
+    sorted.forEach(item => {
+        const hourTs = Math.floor(item.dt / 3600) * 3600;
+        if (!byHour.has(hourTs)) byHour.set(hourTs, item);
+    });
+
+    const getPrevNext = (targetTs) => {
+        let prev = null;
+        let next = null;
+        for (const item of sorted) {
+            if (item.dt <= targetTs) prev = item;
+            if (item.dt >= targetTs) {
+                next = item;
+                break;
+            }
+        }
+        return { prev, next };
+    };
+
+    const filled = [];
+    for (let h = 0; h <= 23; h++) {
+        const ts = startTs + (h * 3600);
+
+        if (byHour.has(ts)) {
+            filled.push(byHour.get(ts));
+            continue;
+        }
+
+        const { prev, next } = getPrevNext(ts);
+        let generated = null;
+
+        if (prev && next && next.dt !== prev.dt) {
+            const ratio = (ts - prev.dt) / (next.dt - prev.dt);
+            generated = {
+                dt: ts,
+                main: {
+                    ...prev.main,
+                    temp: prev.main.temp + ((next.main.temp - prev.main.temp) * ratio)
+                },
+                weather: prev.weather,
+                clouds: prev.clouds,
+                wind: {
+                    ...(prev.wind || { speed: 0, deg: 0 }),
+                    speed: (prev.wind?.speed || 0) + (((next.wind?.speed || 0) - (prev.wind?.speed || 0)) * ratio)
+                },
+                pop: prev.pop ?? 0
+            };
+        } else if (prev) {
+            generated = { ...prev, dt: ts };
+        } else if (next) {
+            generated = { ...next, dt: ts };
+        }
+
+        if (generated) filled.push(generated);
+    }
+
+    return filled;
+}
+
 /**
  * Renders the horizontal hourly forecast list in the Hero section
  */
@@ -1024,9 +1091,6 @@ function displayHourlyForecast(items) {
     const nowHourDate = new Date();
     nowHourDate.setMinutes(0, 0, 0);
     const nowHourTs = Math.floor(nowHourDate.getTime() / 1000);
-    const endOfDayDate = new Date(nowHourDate);
-    endOfDayDate.setHours(23, 0, 0, 0);
-    const endOfDayTs = Math.floor(endOfDayDate.getTime() / 1000);
 
     let renderItems = interpolated;
 
@@ -1042,12 +1106,11 @@ function displayHourlyForecast(items) {
             if (!byHour.has(hourTs)) byHour.set(hourTs, item);
         });
 
-        renderItems = Array.from(byHour.values())
-            .sort((a, b) => a.dt - b.dt)
-            .filter(item => item.dt >= nowHourTs - (3 * 3600) && item.dt <= endOfDayTs);
+        const normalizedToday = Array.from(byHour.values()).sort((a, b) => a.dt - b.dt);
+        renderItems = fillDayHoursTo23(normalizedToday);
     } else {
-        // For non-current days, keep a compact hourly preview
-        renderItems = interpolated.slice(0, 12);
+        // For non-current days, render full timeline from 00:00 to 23:00
+        renderItems = fillDayHoursTo23(interpolated);
     }
 
     renderItems.forEach(item => {
