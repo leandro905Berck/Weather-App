@@ -30,7 +30,7 @@ const loadingState = document.getElementById('loadingState');
 const mainDashboard = document.getElementById('mainDashboard');
 const radarSection = document.getElementById('radarSection');
 const pwsBtn = document.getElementById('pwsBtn');
-const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeToggleGroup = document.getElementById('themeToggleGroup');
 
 // New DOM Elements for Details
 const uvIndex = document.getElementById('uvIndex');
@@ -48,6 +48,8 @@ const moonIllumination = document.getElementById('moonIllumination');
 const tempUnitToggle = document.getElementById('tempUnitToggle');
 const pressureUnitSelect = document.getElementById('pressureUnitSelect');
 const windUnitSelect = document.getElementById('windUnitSelect');
+const unitsToggleBtn = document.getElementById('unitsToggleBtn');
+const unitsPanel = document.getElementById('unitsPanel');
 
 // Radar Map Variables
 let map = null;
@@ -70,6 +72,7 @@ let currentWeatherData = null;  // Store current weather for chart context
 let currentChartData = null;    // Store data for switching views
 let isPwsMode = false;          // Track if displaying PWS data
 let currentActiveLayer = 'precipitation_new'; // Track active radar layer
+let isDetailedViewUnlocked = false; // Controls visibility of advanced sections
 
 // Chart Variables
 let weatherChart = null;
@@ -123,7 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners
     searchBtn.addEventListener('click', handleSearch);
     locationBtn.addEventListener('click', handleGeolocation);
-    pwsBtn.addEventListener('click', fetchPwsData);
+    if (pwsBtn) {
+        pwsBtn.addEventListener('click', fetchPwsData);
+    }
     cityInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSearch();
     });
@@ -153,32 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize radar map layer controls
     initializeRadarControls();
 
-    // Theme initialization
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-        if (themeToggleBtn) themeToggleBtn.innerHTML = '🌞 Tema';
-    }
-
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            if (currentTheme === 'light') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'dark');
-                themeToggleBtn.innerHTML = '🌓 Tema';
-                if (typeof updateChart === 'function') updateChart();
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-                themeToggleBtn.innerHTML = '🌞 Tema';
-                if (typeof updateChart === 'function') updateChart();
-            }
-        });
-    }
+    initializeThemeToggle();
 
     // Initialize Unit Controls
     initializeUnitControls();
+    initializeUnitsPanelToggle();
 
     // Initialize Chart Controls
     initializeChartControls();
@@ -193,14 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hourlyList) initDragToScroll(hourlyList);
     if (forecastSummaryList) initDragToScroll(forecastSummaryList);
 
-    // Scroll to detailed forecast
+    // Toggle detailed content visibility
     const viewDetailedBtn = document.getElementById('viewDetailedForecast');
     if (viewDetailedBtn) {
         viewDetailedBtn.addEventListener('click', () => {
-            const detailSection = document.getElementById('detailedForecastSection');
-            if (detailSection) {
-                detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            toggleDetailedView();
         });
     }
 });
@@ -234,6 +215,85 @@ function initializeUnitControls() {
         units.wind = e.target.value;
         localStorage.setItem('unitWind', units.wind);
         updateWeatherDisplay();
+    });
+}
+
+function toggleDetailedView() {
+    const detailsGrid = document.getElementById('dashboardDetailsGrid');
+    const detailedSection = document.getElementById('detailedForecastSection');
+    const viewDetailedBtn = document.getElementById('viewDetailedForecast');
+
+    isDetailedViewUnlocked = !isDetailedViewUnlocked;
+
+    const sections = [detailsGrid, detailedSection, radarSection].filter(Boolean);
+    sections.forEach((section) => {
+        section.classList.toggle('is-collapsed', !isDetailedViewUnlocked);
+    });
+
+    if (viewDetailedBtn) {
+        viewDetailedBtn.textContent = isDetailedViewUnlocked
+            ? '📊 Ocultar Previsão Detalhada'
+            : '📊 Ver Previsão Detalhada';
+    }
+
+    if (isDetailedViewUnlocked && !map && currentCoords.lat !== 0) {
+        initializeMap(currentCoords.lat, currentCoords.lon);
+    } else if (isDetailedViewUnlocked && map) {
+        // Re-center map to latest searched/geolocated coordinates when reopening details
+        if (currentCoords.lat !== 0) {
+            map.setView([currentCoords.lat, currentCoords.lon], 10);
+            updateLocationMarker(currentCoords.lat, currentCoords.lon);
+        }
+        setTimeout(() => map.invalidateSize(), 200);
+    }
+}
+
+function initializeThemeToggle() {
+    if (!themeToggleGroup) return;
+
+    const themeButtons = themeToggleGroup.querySelectorAll('.toggle-btn[data-theme]');
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+
+    const applyTheme = (theme) => {
+        if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            theme = 'dark';
+        }
+
+        localStorage.setItem('theme', theme);
+
+        themeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
+        });
+
+        if (typeof updateChart === 'function') updateChart();
+    };
+
+    applyTheme(savedTheme);
+
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            applyTheme(btn.getAttribute('data-theme'));
+        });
+    });
+}
+
+function initializeUnitsPanelToggle() {
+    if (!unitsToggleBtn || !unitsPanel) return;
+
+    const setExpanded = (expanded) => {
+        unitsPanel.classList.toggle('is-collapsed', !expanded);
+        unitsToggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    };
+
+    // Começa recolhido por padrão (estado inicial no HTML).
+    setExpanded(false);
+
+    unitsToggleBtn.addEventListener('click', () => {
+        const isExpanded = unitsToggleBtn.getAttribute('aria-expanded') === 'true';
+        setExpanded(!isExpanded);
     });
 }
 
@@ -295,6 +355,35 @@ function formatWind(kmh) {
     }
 
     return `${Math.round(value)} ${label}`;
+}
+
+// Convert wind speed from m/s to selected unit (numeric only)
+function convertWindFromMs(ms) {
+    switch (units.wind) {
+        case 'ms':
+            return ms;
+        case 'mph':
+            return ms * 2.23694;
+        case 'kn':
+            return ms * 1.94384;
+        case 'kmh':
+        default:
+            return ms * 3.6;
+    }
+}
+
+function getWindUnitLabel() {
+    switch (units.wind) {
+        case 'ms':
+            return 'm/s';
+        case 'mph':
+            return 'mph';
+        case 'kn':
+            return 'kn';
+        case 'kmh':
+        default:
+            return 'km/h';
+    }
 }
 
 // Get cardinal direction from degrees
@@ -861,6 +950,60 @@ function interpolateHourlyData(items) {
     return interpolated;
 }
 
+function buildCurrentHourAnchor() {
+    if (!currentResponseData?.main || !currentResponseData?.weather?.[0]) return null;
+
+    const nowHourDate = new Date();
+    nowHourDate.setMinutes(0, 0, 0);
+    const nowHourTs = Math.floor(nowHourDate.getTime() / 1000);
+
+    return {
+        // Always anchor to full hour to avoid times like 07:04
+        dt: nowHourTs,
+        main: {
+            temp: currentResponseData.main.temp,
+            temp_min: currentResponseData.main.temp_min ?? currentResponseData.main.temp,
+            temp_max: currentResponseData.main.temp_max ?? currentResponseData.main.temp,
+            feels_like: currentResponseData.main.feels_like ?? currentResponseData.main.temp,
+            pressure: currentResponseData.main.pressure,
+            humidity: currentResponseData.main.humidity
+        },
+        weather: currentResponseData.weather,
+        clouds: currentResponseData.clouds || { all: 0 },
+        wind: currentResponseData.wind || { speed: 0, deg: 0 },
+        pop: 0
+    };
+}
+
+function buildPreviousHourlyFromCurrent(anchor, interpolatedItems, hoursBack = 3) {
+    if (!anchor) return [];
+
+    const nextItem = interpolatedItems.find(item => item.dt > anchor.dt);
+    const deltaHours = nextItem ? Math.max(1, (nextItem.dt - anchor.dt) / 3600) : 1;
+    const tempTrendPerHour = nextItem ? (nextItem.main.temp - anchor.main.temp) / deltaHours : 0;
+    const windTrendPerHour = nextItem ? ((nextItem.wind?.speed || 0) - (anchor.wind?.speed || 0)) / deltaHours : 0;
+
+    const previous = [];
+    for (let h = hoursBack; h >= 1; h--) {
+        previous.push({
+            dt: anchor.dt - (h * 3600),
+            main: {
+                ...anchor.main,
+                temp: anchor.main.temp - (tempTrendPerHour * h)
+            },
+            weather: anchor.weather,
+            clouds: anchor.clouds,
+            wind: {
+                ...(anchor.wind || { speed: 0, deg: 0 }),
+                speed: (anchor.wind?.speed || 0) - (windTrendPerHour * h)
+            },
+            pop: 0
+        });
+    }
+
+    return previous;
+}
+
 /**
  * Renders the horizontal hourly forecast list in the Hero section
  */
@@ -869,17 +1012,59 @@ function displayHourlyForecast(items) {
     if (!list) return;
     list.innerHTML = '';
 
-    items.forEach(item => {
+    const interpolated = interpolateHourlyData(items || []);
+    const nowDate = new Date();
+    const isCurrentDay = (items || []).some(item => {
+        const d = new Date(item.dt * 1000);
+        return d.getDate() === nowDate.getDate()
+            && d.getMonth() === nowDate.getMonth()
+            && d.getFullYear() === nowDate.getFullYear();
+    });
+
+    const nowHourDate = new Date();
+    nowHourDate.setMinutes(0, 0, 0);
+    const nowHourTs = Math.floor(nowHourDate.getTime() / 1000);
+    const endOfDayDate = new Date(nowHourDate);
+    endOfDayDate.setHours(23, 0, 0, 0);
+    const endOfDayTs = Math.floor(endOfDayDate.getTime() / 1000);
+
+    let renderItems = interpolated;
+
+    if (isCurrentDay) {
+        const anchor = buildCurrentHourAnchor();
+        const previousItems = buildPreviousHourlyFromCurrent(anchor, interpolated, 3);
+        const timeline = [...previousItems, ...(anchor ? [anchor] : []), ...interpolated];
+
+        // Deduplicate by hour timestamp
+        const byHour = new Map();
+        timeline.forEach(item => {
+            const hourTs = Math.floor(item.dt / 3600) * 3600;
+            if (!byHour.has(hourTs)) byHour.set(hourTs, item);
+        });
+
+        renderItems = Array.from(byHour.values())
+            .sort((a, b) => a.dt - b.dt)
+            .filter(item => item.dt >= nowHourTs - (3 * 3600) && item.dt <= endOfDayTs);
+    } else {
+        // For non-current days, keep a compact hourly preview
+        renderItems = interpolated.slice(0, 12);
+    }
+
+    renderItems.forEach(item => {
+        const itemHourTs = Math.floor(item.dt / 3600) * 3600;
         const time = new Date(item.dt * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const isNow = isCurrentDay && itemHourTs === nowHourTs;
+        const timeLabel = isNow ? 'Agora' : time;
         const icon = weatherIcons[item.weather[0].icon] || '🌤️';
         const temp = Math.round(item.main.temp);
 
         const div = document.createElement('div');
-        div.className = 'hourly-item';
+        div.className = `hourly-item ${isNow ? 'hourly-item-now' : ''}`;
+        if (isNow) div.title = `Agora (${time})`;
         div.innerHTML = `
             <span class="hourly-temp">${temp}°</span>
             <span class="hourly-icon">${icon}</span>
-            <span class="hourly-time">${time}</span>
+            <span class="hourly-time">${timeLabel}</span>
         `;
         list.appendChild(div);
     });
@@ -990,14 +1175,16 @@ function updateChart() {
         } else if (currentMetric === 'clouds') {
             val = item.clouds?.all || 0;
         } else if (currentMetric === 'wind') {
-            val = Math.round((item.wind?.speed || 0) * 3.6);
+            val = Math.round(convertWindFromMs(item.wind?.speed || 0));
         }
         values.push(val);
     });
 
     if (weatherChart) weatherChart.destroy();
 
-    const valueSuffix = currentMetric === 'temp' ? (units.temp === 'C' ? '°C' : '°F') : (currentMetric === 'wind' ? ' km/h' : '%');
+    const valueSuffix = currentMetric === 'temp'
+        ? (units.temp === 'C' ? '°C' : '°F')
+        : (currentMetric === 'wind' ? ` ${getWindUnitLabel()}` : '%');
 
     // Dynamic Colors
     let borderColor = '#ffd700';
@@ -1155,15 +1342,18 @@ function hideError() {
 
 // Initialize Leaflet map
 function initializeMap(lat, lon) {
+    // Defer radar rendering until user opens detailed view
+    if (!isDetailedViewUnlocked) {
+        currentCoords = { lat, lon };
+        return;
+    }
+
     // If map already exists, update center and marker
     if (map) {
         map.setView([lat, lon], 10);
         updateLocationMarker(lat, lon);
         return;
     }
-
-    // Show radar section first
-    radarSection.classList.remove('hidden');
 
     // Small delay to ensure container is visible before creating map
     setTimeout(() => {

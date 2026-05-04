@@ -66,6 +66,97 @@ const FALLBACK_ENGINE = {
         return selected.join(' ');
     },
 
+    ensureTemplateDepth() {
+        if (this._templatesExpanded) return;
+
+        const connectors = [
+            "Agora,",
+            "No momento,",
+            "Em ${city},",
+            "Nesta ${period},",
+            "Hoje,",
+            "Com esse tempo,",
+            "No ritmo de ${season},",
+            "Pelo céu atual,",
+            "Por ora,",
+            "Neste cenário,"
+        ];
+
+        const complements = [
+            "clima ${sky_mood}.",
+            "sensação de ${feeling}.",
+            "vale se planejar.",
+            "atenção às mudanças.",
+            "conforto com cuidados simples.",
+            "tempo típico da estação.",
+            "rotina pede adaptação.",
+            "bom momento para se organizar.",
+            "condições estáveis por enquanto.",
+            "prevenção sempre ajuda."
+        ];
+
+        const closings = [
+            "Aproveite.",
+            "Fique atento.",
+            "Cuide-se.",
+            "Bom dia por aí.",
+            "Planeje-se bem.",
+            "Siga com calma.",
+            "Curta com segurança.",
+            "Vai dar certo.",
+            "Olho no céu.",
+            "Tudo sob controle."
+        ];
+
+        const enrichList = (list, minCount = 50) => {
+            const base = Array.isArray(list) ? list.filter(Boolean) : [];
+            if (base.length === 0) return base;
+            if (base.length >= minCount) return base;
+
+            const enriched = [...base];
+            let i = 0;
+
+            while (enriched.length < minCount) {
+                const template = base[i % base.length];
+                const connector = connectors[i % connectors.length];
+                const complement = complements[i % complements.length];
+                const closing = closings[i % closings.length];
+
+                // Gera variações curtas para manter leitura rápida
+                const mode = i % 4;
+                if (mode === 0) {
+                    enriched.push(`${template} ${closing}`);
+                } else if (mode === 1) {
+                    enriched.push(`${connector} ${template}`);
+                } else if (mode === 2) {
+                    enriched.push(`${template} ${complement}`);
+                } else {
+                    enriched.push(`${connector} ${template} ${closing}`);
+                }
+
+                i++;
+            }
+
+            // Remove duplicatas preservando ordem
+            return [...new Set(enriched)].slice(0, minCount);
+        };
+
+        const ensureSection = (obj) => {
+            Object.keys(obj).forEach((key) => {
+                if (Array.isArray(obj[key])) {
+                    obj[key] = enrichList(obj[key], 50);
+                }
+            });
+        };
+
+        ensureSection(this.templates.RESUMO);
+        ensureSection(this.templates.SAUDE);
+        ensureSection(this.templates.HUMOR);
+        this.templates.DICA = enrichList(this.templates.DICA, 50);
+
+        this._templatesExpanded = true;
+    },
+
     // 2. BIBLIOTECA DE TEMPLATES (ULTRA-MASSIVA)
     templates: {
         RESUMO: {
@@ -292,6 +383,7 @@ const FALLBACK_ENGINE = {
     // 4. FUNÇÃO PRINCIPAL
     generate(current, forecast, aqi) {
         if (!current || !current.main || !current.weather) return null;
+        this.ensureTemplateDepth();
 
         const city = current.name || 'sua região';
         const temp = Math.round(current.main.temp);
