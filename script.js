@@ -1106,55 +1106,61 @@ function displayHourlyForecast(items) {
     if (!list) return;
     list.innerHTML = '';
 
-    const interpolated = interpolateHourlyData(items || []);
+    const rawItems = items || [];
     const nowDate = new Date();
-    const isCurrentDay = (items || []).some(item => {
+    const isCurrentDay = rawItems.some(item => {
         const d = new Date(item.dt * 1000);
         return d.getDate() === nowDate.getDate()
             && d.getMonth() === nowDate.getMonth()
             && d.getFullYear() === nowDate.getFullYear();
     });
 
-    const nowHourDate = new Date();
-    nowHourDate.setMinutes(0, 0, 0);
-    const nowHourTs = Math.floor(nowHourDate.getTime() / 1000);
-
-    let renderItems = interpolated;
+    let renderItems = [...rawItems].sort((a, b) => a.dt - b.dt);
 
     if (isCurrentDay) {
+        // If it's today, build the current weather anchor
         const anchor = buildCurrentHourAnchor();
-        const previousItems = buildPreviousHourlyFromCurrent(anchor, interpolated, 3);
-        const timeline = [...previousItems, ...(anchor ? [anchor] : []), ...interpolated];
-
-        // Deduplicate by hour timestamp
-        const byHour = new Map();
-        timeline.forEach(item => {
-            const hourTs = Math.floor(item.dt / 3600) * 3600;
-            if (!byHour.has(hourTs)) byHour.set(hourTs, item);
-        });
-
-        const normalizedToday = Array.from(byHour.values()).sort((a, b) => a.dt - b.dt);
-        renderItems = fillDayHoursTo23(normalizedToday);
-    } else {
-        // For non-current days, render full timeline from 00:00 to 23:00
-        renderItems = fillDayHoursTo23(interpolated);
+        
+        // Filter out past forecast items, keeping only future ones
+        const nowTs = Math.floor(nowDate.getTime() / 1000);
+        const futureItems = rawItems.filter(item => item.dt > nowTs);
+        
+        // Combine anchor ("Agora") with upcoming 3-hourly items
+        if (anchor) {
+            renderItems = [anchor, ...futureItems];
+        } else {
+            renderItems = futureItems;
+        }
     }
 
-    renderItems.forEach(item => {
-        const itemHourTs = Math.floor(item.dt / 3600) * 3600;
+    renderItems.forEach((item, index) => {
         const time = new Date(item.dt * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const isNow = isCurrentDay && itemHourTs === nowHourTs;
+        const isNow = isCurrentDay && index === 0;
         const timeLabel = isNow ? 'Agora' : time;
         const icon = weatherIcons[item.weather[0].icon] || '🌤️';
-        const temp = Math.round(item.main.temp);
+        const tempText = formatTemp(item.main.temp);
+        
+        // 1. Rich Metrics (Solution 1)
+        const popVal = Math.round((item.pop || 0) * 100);
+        const popText = popVal > 0 ? `💧 ${popVal}%` : '';
+        const windVal = item.wind ? convertWindFromMs(item.wind.speed) : 0;
+        const windText = `💨 ${Math.round(windVal)} ${getWindUnitLabel()}`;
+
+        // 2. Solar Gradient Hook (Solution 2)
+        const hour = new Date(item.dt * 1000).getHours();
 
         const div = document.createElement('div');
         div.className = `hourly-item ${isNow ? 'hourly-item-now' : ''}`;
+        div.setAttribute('data-hour', hour);
         if (isNow) div.title = `Agora (${time})`;
         div.innerHTML = `
-            <span class="hourly-temp">${temp}°</span>
-            <span class="hourly-icon">${icon}</span>
             <span class="hourly-time">${timeLabel}</span>
+            <span class="hourly-icon">${icon}</span>
+            <span class="hourly-temp">${tempText}</span>
+            <div class="hourly-details-mini">
+                ${popText ? `<span class="hourly-pop">${popText}</span>` : ''}
+                <span class="hourly-wind">${windText}</span>
+            </div>
         `;
         list.appendChild(div);
     });

@@ -871,6 +871,127 @@ body::before {
   gap: var(--spacing-lg);
   padding: var(--spacing-md) var(--spacing-lg) !important;
   border-top: 1px solid hsla(0, 0%, 100%, 0.05);
+  justify-content: center; /* Center items by default */
+}
+
+@media (max-width: 768px) {
+  .hero-hourly {
+    justify-content: safe center;
+  }
+}
+
+/* Hourly Item Styling - Expanded layout for metrics */
+.hourly-item {
+  flex: 0 0 100px !important;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  scroll-snap-align: none;
+}
+
+/* Solar Gradients (Solution 2) based on data-hour attribute */
+/* Dawn & Sunrise (5:00 to 7:59) */
+.hourly-item[data-hour="5"],
+.hourly-item[data-hour="6"],
+.hourly-item[data-hour="7"] {
+  background: linear-gradient(135deg, hsla(20, 100%, 65%, 0.15) 0%, hsla(280, 75%, 60%, 0.05) 100%) !important;
+  border: 1px solid hsla(20, 100%, 65%, 0.25) !important;
+}
+
+/* Day (8:00 to 16:59) */
+.hourly-item[data-hour="8"],
+.hourly-item[data-hour="9"],
+.hourly-item[data-hour="10"],
+.hourly-item[data-hour="11"],
+.hourly-item[data-hour="12"],
+.hourly-item[data-hour="13"],
+.hourly-item[data-hour="14"],
+.hourly-item[data-hour="15"],
+.hourly-item[data-hour="16"] {
+  background: linear-gradient(135deg, hsla(45, 100%, 60%, 0.12) 0%, hsla(200, 80%, 60%, 0.03) 100%) !important;
+  border: 1px solid hsla(45, 100%, 60%, 0.2) !important;
+}
+
+/* Sunset & Dusk (17:00 to 19:59) */
+.hourly-item[data-hour="17"],
+.hourly-item[data-hour="18"],
+.hourly-item[data-hour="19"] {
+  background: linear-gradient(135deg, hsla(340, 90%, 60%, 0.15) 0%, hsla(250, 70%, 55%, 0.05) 100%) !important;
+  border: 1px solid hsla(340, 90%, 60%, 0.25) !important;
+}
+
+/* Night (20:00 to 4:59) */
+.hourly-item[data-hour="20"],
+.hourly-item[data-hour="21"],
+.hourly-item[data-hour="22"],
+.hourly-item[data-hour="23"],
+.hourly-item[data-hour="0"],
+.hourly-item[data-hour="1"],
+.hourly-item[data-hour="2"],
+.hourly-item[data-hour="3"],
+.hourly-item[data-hour="4"] {
+  background: linear-gradient(135deg, hsla(230, 80%, 65%, 0.08) 0%, hsla(230, 35%, 10%, 0.5) 100%) !important;
+  border: 1px solid hsla(230, 80%, 65%, 0.15) !important;
+}
+
+.hourly-item:hover {
+  filter: brightness(1.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.hourly-item-now {
+  background: linear-gradient(135deg, hsla(230, 70%, 60%, 0.3) 0%, hsla(230, 70%, 40%, 0.1) 100%) !important;
+  border: 1px solid var(--color-primary) !important;
+  box-shadow: 0 0 15px hsla(230, 70%, 60%, 0.3);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.hourly-temp {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.hourly-icon {
+  font-size: var(--font-size-xl);
+  margin: 2px 0;
+}
+
+.hourly-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+/* Secondary mini-metrics inside card */
+.hourly-details-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 4px;
+  border-top: 1px solid hsla(0, 0%, 100%, 0.08);
+  padding-top: var(--spacing-xs);
+}
+
+.hourly-pop {
+  font-size: 10px;
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.hourly-wind {
+  font-size: 9px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Slim scrollbars for accessibility and visual cue */
