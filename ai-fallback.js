@@ -381,7 +381,7 @@ const FALLBACK_ENGINE = {
     },
 
     // 4. FUNÇÃO PRINCIPAL
-    generate(current, forecast, aqi) {
+    generate(current, forecast, aqi, variation = 0) {
         if (!current || !current.main || !current.weather) return null;
         this.ensureTemplateDepth();
 
@@ -461,6 +461,279 @@ const FALLBACK_ENGINE = {
         };
 
         const insights = [];
+
+        {
+            const descLower = (desc || '').toLowerCase();
+            const condition = (desc || 'tempo sem descrição').replace(/^./, c => c.toUpperCase());
+            const visibilityKm = Number.isFinite(current.visibility) ? current.visibility / 1000 : null;
+            const uvRounded = Math.round(uv || 0);
+            const aqiLabel = ['Boa', 'Moderada', 'Ruim', 'Muito ruim', 'Péssima'][aqiVal - 1] || 'Indisponível';
+            const hasStorm = descLower.includes('tempestade') || descLower.includes('trovão');
+            const hasRain = descLower.includes('chuva') || descLower.includes('garoa');
+            const hasFog = descLower.includes('névoa') || descLower.includes('neblina');
+            const hasClouds = descLower.includes('nuvens') || descLower.includes('nublado');
+            const dayWithArticle = (day) => day?.includes('feira') ? `na ${day}` : `no ${day}`;
+            const variationIndex = Math.abs(Number(variation) || 0);
+            const choose = (variants, offset = 0) => variants[(variationIndex + offset) % variants.length];
+
+            const clean = (value, max = 118) => {
+                const text = String(value || '').replace(/\s+/g, ' ').trim();
+                if (text.length <= max) return text;
+                const trimmed = text.slice(0, max - 3).replace(/\s+\S*$/, '');
+                return `${trimmed || text.slice(0, max - 3)}...`;
+            };
+
+            const addInsight = ({ icon, category, title, message }) => {
+                insights.push({
+                    icon,
+                    category,
+                    title: clean(title, 28),
+                    message: clean(message)
+                });
+            };
+
+            let summary = {
+                icon: '🌤️',
+                title: choose(['Clima Agora', 'Leitura Atual', 'Agora em Campo']),
+                message: choose([
+                    `Em ${city}, ${condition.toLowerCase()} com ${temp}°C e sensação de ${feels_like}°C.`,
+                    `${city} marca ${temp}°C agora, com sensação de ${feels_like}°C e condição de ${condition.toLowerCase()}.`,
+                    `O cenário atual em ${city} é de ${condition.toLowerCase()}, ${temp}°C e umidade em ${humidity}%.`
+                ])
+            };
+
+            if (hasStorm) {
+                summary = {
+                    icon: '⛈️',
+                    title: choose(['Tempo Instável', 'Tempestade Ativa', 'Céu Carregado']),
+                    message: choose([
+                        `Tempestade em ${city}, ${temp}°C e vento de ${wind} km/h; reduza deslocamentos se possível.`,
+                        `${city} está sob tempestade agora; vento de ${wind} km/h pede cautela nos deslocamentos.`,
+                        `A instabilidade domina ${city}, com ${condition.toLowerCase()} e sensação de ${feels_like}°C.`
+                    ])
+                };
+            } else if (hasRain) {
+                summary = {
+                    icon: '🌧️',
+                    title: choose(['Chuva na Área', 'Tempo Úmido', 'Céu Molhado']),
+                    message: choose([
+                        `${condition} mantém o tempo úmido em ${city}, com ${temp}°C e umidade de ${humidity}%.`,
+                        `A chuva deixa ${city} com clima mais úmido, ${temp}°C e sensação de ${feels_like}°C.`,
+                        `${city} segue com ${condition.toLowerCase()}, ar úmido e vento de ${wind} km/h.`
+                    ])
+                };
+            } else if (temp >= 32) {
+                summary = {
+                    icon: '☀️',
+                    title: choose(['Calor Forte', 'Tarde Quente', 'Temperatura Alta']),
+                    message: choose([
+                        `${city} registra ${temp}°C, sensação de ${feels_like}°C e ar mais ${humidity >= 60 ? 'abafado' : 'seco'}.`,
+                        `O calor aparece com força em ${city}: ${temp}°C agora e sensação chegando a ${feels_like}°C.`,
+                        `Com ${temp}°C e umidade de ${humidity}%, o conforto térmico exige mais cuidado hoje.`
+                    ])
+                };
+            } else if (temp <= 12) {
+                summary = {
+                    icon: '❄️',
+                    title: choose(['Frio Marcante', 'Ar Gelado', 'Baixa Temperatura']),
+                    message: choose([
+                        `${city} está com ${temp}°C e sensação de ${feels_like}°C; vale reforçar o agasalho.`,
+                        `O frio domina ${city}: ${temp}°C agora, com sensação térmica de ${feels_like}°C.`,
+                        `A temperatura caiu em ${city}; os ${temp}°C pedem roupa mais quente.`
+                    ])
+                };
+            } else if (hasFog) {
+                summary = {
+                    icon: '🌫️',
+                    title: choose(['Visibilidade Baixa', 'Atenção na Rota', 'Neblina no Caminho']),
+                    message: choose([
+                        `${condition} reduz a leitura do caminho; dirija com mais margem e luzes ligadas.`,
+                        `A visibilidade está limitada em ${city}; reduza a velocidade em ruas e estradas.`,
+                        `Com ${condition.toLowerCase()}, o deslocamento pede mais distância e atenção.`
+                    ])
+                };
+            } else if (hasClouds || clouds >= 70) {
+                summary = {
+                    icon: '☁️',
+                    title: choose(['Céu Encoberto', 'Muitas Nuvens', 'Tempo Fechado']),
+                    message: choose([
+                        `${city} tem muitas nuvens, ${temp}°C e vento de ${wind} km/h nesta ${period.toLowerCase()}.`,
+                        `O céu fechado segura o sol em ${city}, com temperatura em ${temp}°C.`,
+                        `Nuvens predominam em ${city}; a sensação agora fica em ${feels_like}°C.`
+                    ])
+                };
+            }
+
+            addInsight({ category: 'Resumo', ...summary });
+
+            if (hasStorm) {
+                addInsight({
+                    icon: '⚠️',
+                    category: 'Alerta',
+                    title: choose(['Atenção ao Tempo', 'Evite Exposição', 'Risco no Céu']),
+                    message: choose([
+                        'Evite áreas abertas, árvores e estruturas metálicas enquanto houver atividade de tempestade.',
+                        'Se puder, espere a instabilidade passar antes de sair para áreas descobertas.',
+                        'Durante trovoadas, prefira locais fechados e mantenha distância de estruturas metálicas.'
+                    ], 1)
+                });
+            } else if (nextEventData?.type === 'chuva') {
+                addInsight({
+                    icon: '☔',
+                    category: nextEventData.prob >= 60 ? 'Alerta' : 'Semana',
+                    title: choose(['Chuva no Radar', 'Possível Chuva', 'Olho na Previsão']),
+                    message: choose([
+                        `A previsão indica ${nextEventData.prob}% de chance de chuva em ${city} ${dayWithArticle(nextEventData.day)}.`,
+                        `${dayWithArticle(nextEventData.day).replace(/^./, c => c.toUpperCase())}, a chance de chuva chega a ${nextEventData.prob}% em ${city}.`,
+                        `Inclua um plano B: há ${nextEventData.prob}% de possibilidade de chuva ${dayWithArticle(nextEventData.day)}.`
+                    ], 1)
+                });
+            } else if (nextEventData?.type === 'calor') {
+                addInsight({
+                    icon: '🔥',
+                    category: 'Semana',
+                    title: choose(['Calor à Frente', 'Dias Mais Quentes', 'Alta Temperatura']),
+                    message: choose([
+                        `O calor deve chegar a ${nextEventData.value}°C ${dayWithArticle(nextEventData.day)}; prefira horários mais frescos.`,
+                        `${dayWithArticle(nextEventData.day).replace(/^./, c => c.toUpperCase())}, a máxima prevista fica perto de ${nextEventData.value}°C.`,
+                        `A semana reserva calor de até ${nextEventData.value}°C; organize atividades para manhã ou fim da tarde.`
+                    ], 1)
+                });
+            } else if (hasRain) {
+                addInsight({
+                    icon: '🚗',
+                    category: 'Alerta',
+                    title: choose(['Deslocamento', 'Piso Molhado', 'Saída com Cuidado']),
+                    message: choose([
+                        'Piso molhado aumenta o risco de escorregões e trânsito lento; saia com alguns minutos extras.',
+                        'Com chuva, evite pressa no trajeto e mantenha mais distância no trânsito.',
+                        'Calçadas e vias podem ficar escorregadias; escolha calçado firme antes de sair.'
+                    ], 1)
+                });
+            } else if (uv >= 6) {
+                addInsight({
+                    icon: '🧴',
+                    category: 'Saúde',
+                    title: choose(['UV Elevado', 'Sol Forte', 'Proteção Necessária']),
+                    message: choose([
+                        `Índice UV ${uvRounded} (${uv_level}); use protetor e reduza exposição direta ao sol.`,
+                        `Com UV ${uvRounded}, pele e olhos precisam de proteção mesmo em saídas rápidas.`,
+                        `O sol exige cuidado hoje: prefira sombra e reaplique protetor se ficar ao ar livre.`
+                    ], 1)
+                });
+            } else if (aqiVal >= 4) {
+                addInsight({
+                    icon: '😷',
+                    category: 'Saúde',
+                    title: 'Ar Complicado',
+                    message: `Qualidade do ar ${aqiLabel.toLowerCase()}; atividades intensas ao ar livre pedem cautela.`
+                });
+            } else if (humidity < 30) {
+                addInsight({
+                    icon: '💧',
+                    category: 'Saúde',
+                    title: 'Ar Seco',
+                    message: `Umidade em ${humidity}% pode irritar olhos e garganta; hidrate-se ao longo do dia.`
+                });
+            } else if (wind >= 35) {
+                addInsight({
+                    icon: '💨',
+                    category: 'Alerta',
+                    title: 'Vento Forte',
+                    message: `Ventos de ${wind} km/h podem derrubar objetos leves; confira janelas e varandas.`
+                });
+            } else if (visibilityKm !== null && visibilityKm < 5) {
+                addInsight({
+                    icon: '🚗',
+                    category: 'Alerta',
+                    title: 'Rota com Cuidado',
+                    message: `Visibilidade em ${visibilityKm.toFixed(1)} km; mantenha distância maior no trânsito.`
+                });
+            } else {
+                addInsight({
+                    icon: '📅',
+                    category: 'Semana',
+                    title: choose(['Tendência Calma', 'Sem Alerta Forte', 'Clima Estável']),
+                    message: choose([
+                        `Sem alerta forte agora; acompanhe a previsão para ajustar planos ao longo do dia.`,
+                        `O cenário segue sem risco relevante, mas vale observar mudanças no decorrer do dia.`,
+                        `Por enquanto, o tempo permite uma rotina mais previsível em ${city}.`
+                    ], 1)
+                });
+            }
+
+            let tip = {
+                icon: '💡',
+                category: 'Dica',
+                title: choose(['Para a Rotina', 'Ajuste Simples', 'Conforto no Dia']),
+                message: choose([
+                    'Roupas em camadas ajudam a ajustar conforto se o tempo mudar entre ambientes.',
+                    'Antes de sair, compare a sensação térmica com a temperatura real para escolher a roupa.',
+                    'Uma garrafa de água e uma camada leve resolvem bem mudanças pequenas de conforto.'
+                ], 2)
+            };
+
+            if (hasRain || pop >= 45) {
+                tip = {
+                    icon: '☂️',
+                    category: 'Dica',
+                    title: choose(['Antes de Sair', 'Kit Chuva', 'Rota Preparada']),
+                    message: choose([
+                        'Leve guarda-chuva e reserve alguns minutos extras para deslocamentos.',
+                        'Bolsa protegida e calçado fechado ajudam a evitar incômodo no trajeto.',
+                        'Se tiver compromisso, saia um pouco antes: chuva costuma atrasar deslocamentos.'
+                    ], 2)
+                };
+            } else if (temp >= 30) {
+                tip = {
+                    icon: '🥤',
+                    category: 'Dica',
+                    title: choose(['Hidratação', 'Cuide do Calor', 'Evite Excesso']),
+                    message: choose([
+                        'Tenha água por perto e evite esforço físico nos horários de sol mais forte.',
+                        'Prefira roupas leves e pausas em locais ventilados durante a tarde.',
+                        'Se for caminhar, escolha manhã cedo ou fim da tarde para reduzir desgaste.'
+                    ], 2)
+                };
+            } else if (temp <= 15) {
+                tip = {
+                    icon: '🧥',
+                    category: 'Dica',
+                    title: choose(['Conforto Térmico', 'Camada Extra', 'Frio na Rotina']),
+                    message: choose([
+                        'Use uma camada extra e proteja mãos e pescoço se for ficar ao ar livre.',
+                        'Leve agasalho mesmo em saídas curtas; a sensação pode cair com o vento.',
+                        'Bebidas quentes e roupas fechadas ajudam a manter conforto por mais tempo.'
+                    ], 2)
+                };
+            } else if (uv >= 6) {
+                tip = {
+                    icon: '🕶️',
+                    category: 'Dica',
+                    title: choose(['Proteção Solar', 'Sombra Ajuda', 'Cuidado com UV']),
+                    message: choose([
+                        'Boné, óculos e protetor fazem diferença mesmo com algumas nuvens.',
+                        'Se sair no meio do dia, procure sombra e reduza exposição contínua.',
+                        'Protetor solar e água por perto deixam atividades externas mais seguras.'
+                    ], 2)
+                };
+            } else if (is_weekend && temp >= 18 && temp <= 29 && pop < 35) {
+                tip = {
+                    icon: '🚶',
+                    category: 'Atividade',
+                    title: choose(['Boa Janela', 'Atividade Leve', 'Saída Agradável']),
+                    message: choose([
+                        `Clima favorável para caminhada leve em ${city}, principalmente fora do sol forte.`,
+                        `Uma volta ao ar livre combina bem com os ${temp}°C de agora em ${city}.`,
+                        `Se quiser sair, este é um bom momento para uma atividade tranquila.`
+                    ], 2)
+                };
+            }
+
+            addInsight(tip);
+
+            return { insights };
+        }
 
         // 1. RESOLVER RESUMO (Ultra Dinâmico)
         let resumoGroup = 'mild';
@@ -576,4 +849,4 @@ const FALLBACK_ENGINE = {
 };
 
 // Exportar para o escopo global
-window.generateLocalFallbackInsights = (current, forecast, aqi) => FALLBACK_ENGINE.generate(current, forecast, aqi);
+window.generateLocalFallbackInsights = (current, forecast, aqi, variation) => FALLBACK_ENGINE.generate(current, forecast, aqi, variation);
